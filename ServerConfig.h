@@ -10,7 +10,8 @@ private:
 	int port_		= 55550;
 public:
 	ServerConfig() = default;
-	ServerConfig(int domain, int type, int protocol, int port) : domain_(domain), type_(type), protocol_(protocol), port_(port){};
+	ServerConfig(int domain, int type, int protocol, int port) :
+	 domain_(domain), type_(type), protocol_(protocol), port_(port){};
 	
 	//==== getters ====
 	// maybe not all of them is useful, some of them should be deleted

@@ -11,7 +11,7 @@ enum class PacketType : uint16_t
 	RegisterResponse,
 
 	AuthRequest,
-	AuthResoponse,
+	AuthResponse,
 
 	MessageSend,
 	DisconnectRequest
@@ -22,13 +22,19 @@ struct ParentPacket
 {
 public:
 	PacketType type_;
-	uint32_t messageID_;
-	uint32_t sessionID_;
-	uint16_t messageLen_;
+	uint32_t messageID_	= 0;
+	uint32_t sessionID_	= 0;
+	uint16_t messageLen_	= 0;
 };
 
-struct ConnectRequestPacket:	public ParentPacket{	ConnectRequestPacket()	{ type_ = PacketType::ConnectRequest;	}	};
-struct ConnectResponsePacket:	public ParentPacket{	ConnectResponsePacket()	{ type_ = PacketType::ConnectResponse;	}	};
+struct ConnectRequestPacket:	public ParentPacket
+{
+	ConnectRequestPacket(){ type_ = PacketType::ConnectRequest;	}
+};
+struct ConnectResponsePacket:	public ParentPacket
+{
+	ConnectResponsePacket(){ type_ = PacketType::ConnectResponse;	}
+};
 
 struct RegisterRequestPacket:	public ParentPacket
 {
@@ -38,7 +44,7 @@ public:
 
 	RegisterRequestPacket(){ type_ = PacketType::RegisterRequest; }
 };
-struct RegisterResoponsePacket:	public ParentPacket{	RegisterResponsePacket(){ type_ = PacketType::RegisterResponse;	}	};
+struct RegisterResponsePacket:	public ParentPacket{	RegisterResponsePacket(){ type_ = PacketType::RegisterResponse;	}	};
 
 struct AuthRequestPacket:	public ParentPacket
 {
@@ -48,9 +54,9 @@ public:
 
 	AuthRequestPacket(){ type_ = PacketType::AuthRequest; }
 };
-struct AuthResoponsePacket:	public ParentPacket{	AuthResponsePacket()	{ type_ = PacketType::AuthResponse;	}	};
+struct AuthResponsePacket:	public ParentPacket{	AuthResponsePacket()	{ type_ = PacketType::AuthResponse;	}	};
 
-struct MessageSend:	Public ParentPacket
+struct MessageSend:	public ParentPacket
 {
 public:
 	
