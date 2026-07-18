@@ -54,7 +54,7 @@ struct AuthResponsePacket
 	uint8_t success;	// 1 - true, 0 - false
 };
 
-struct MessageSend
+struct MessageSendPacket
 {
 	uint32_t senderID;
 	uint32_t chatID;
