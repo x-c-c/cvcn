@@ -1,6 +1,8 @@
 #include "Serializer.h"
-
-static void Serializer::appendBytes(std::vector<uint8_t>& dest, const void* src, size_t count)
+#include <cstring>
+#include <arpa/inet.h>
+/* === Сериализация разных типов данных в вектор uint8_t ===*/
+void Serializer::appendBytes(std::vector<uint8_t>& dest, const void* src, size_t count)
 {
 	const size_t offset = dest.size();
 	dest.resize(offset + count);
@@ -23,159 +25,70 @@ void Serializer::writeString(std::vector<uint8_t>& buf, const std::string& str)
 	appendBytes(buf, str.data(), len);
 }
 
+std::vector<uint8_t> Serializer::buildPacket(PacketType type, uint32_t messageID, uint32_t sessionID, const std::vector<uint8_t>& body)
+{
+	PacketHeaderRaw header;
+	header.type_		= htons(static_cast<uint16_t>(type));
+	header.messageID_	= htonl(messageID);
+	header.sessionID_	= htonl(sessionID);
+	header.messageLen_	= htons(static_cast<uint16_t>(body.size()));
 
+	std::vector<uint8_t> result;
+	appendBytes(result, &header, sizeof(header));
+	appendBytes(result, body.data(), body.size());
+	return result;
+}
 
-/*====================================================================*/
-/*							Connect Request							  */
-/*====================================================================*/
 std::vector<uint8_t> Serializer::buildConnectRequestPacket(uint32_t messageID, uint32_t sessionID)
 {
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::ConnectRequest));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= 0;
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	return result;
+	return buildPacket(PacketType::ConnectRequest, messageID, sessionID);
 }
-/*====================================================================*/
-/*							Connect Response			 			  */
-/*====================================================================*/
+
 std::vector<uint8_t> Serializer::buildConnectResponsePacket(uint32_t messageID, uint32_t sessionID)
 {
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::ConnectResponse));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= 0;
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	return result;
+	return buildPacket(PacketType::ConnectResponse, messageID, sessionID);
 }
-/*====================================================================*/
-/*							Register Request 						  */
-/*====================================================================*/
+
 std::vector<uint8_t> Serializer::buildRegisterRequestPacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestPacket& packet)
 {
 	std::vector<uint8_t> body;
 	writeString(body, packet.username);
 	writeString(body, packet.password);
-	
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::RegisterRequest));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= htons(static_cast<uint16_t>(body.size()));
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	appendBytes(result, body.data, body.size());
-	
-	return result;
+	return buildPacket(PacketType::RegisterRequest, messageID, sessionID, body);
 }
-/*====================================================================*/
-/*							Register Response 						  */
-/*====================================================================*/
+
 std::vector<uint8_t> Serializer::buildRegisterResponsePacket(uint32_t messageID, uint32_t sessionID, const RegisterResponsePacket& packet)
-{	
+{
 	std::vector<uint8_t> body;
 	body.push_back(packet.success);
-		
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::RegisterResponse));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= htons(static_cast<uint16_t>(body.size()));
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	appendBytes(result, body.data, body.size());
-	
-	return result;
+	return buildPacket(PacketType::RegisterResponse, messageID, sessionID, body);
 }
-/*====================================================================*/
-/*							Auth Request 							  */
-/*====================================================================*/
+
 std::vector<uint8_t> Serializer::buildAuthRequestPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestPacket& packet)
 {
 	std::vector<uint8_t> body;
 	writeString(body, packet.username);
 	writeString(body, packet.password);
-	
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::RegisterRequest));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= htons(static_cast<uint16_t>(body.size()));
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	appendBytes(result, body.data, body.size());
-	
-	return result;
+	return buildPacket(PacketType::AuthRequest, messageID, sessionID, body);
 }
-/*====================================================================*/
-/*							Auth Response	 						  */
-/*====================================================================*/
+
 std::vector<uint8_t> Serializer::buildAuthResponsePacket(uint32_t messageID, uint32_t sessionID, const AuthResponsePacket& packet)
-{	
+{
 	std::vector<uint8_t> body;
 	body.push_back(packet.success);
-		
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::RegisterResponse));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= htons(static_cast<uint16_t>(body.size()));
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	appendBytes(result, body.data, body.size());
-	
-	return result;
+	return buildPacket(PacketType::AuthResponse, messageID, sessionID, body);
 }
-/*====================================================================*/
-/*							Message Send 							  */
-/*====================================================================*/
+
 std::vector<uint8_t> Serializer::buildMessageSendPacket(uint32_t messageID, uint32_t sessionID, const MessageSendPacket& packet)
-{	
+{
 	std::vector<uint8_t> body;
-	writeUint32(body, packet.senderId);
-	writeUint32(body, packet.chatId);
+	writeUint32(body, packet.senderID);
+	writeUint32(body, packet.chatID);
 	writeString(body, packet.text);
-		
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::MessageSend));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= htons(static_cast<uint16_t>(body.size()));
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	appendBytes(result, body.data, body.size());
-	
-	return result;
-}
-/*====================================================================*/
-/*							Disconnect Request						  */
-/*====================================================================*/
-std::vector<uint8_t> Serializer::buildDisconnectPacket(uint32_t messageID, uint32_t sessionID, const DisconnectRequestPacket& packet)
-{	
-	PacketHeaderRaw header;
-	header.type_		= htons(static_cast<uint16_t>(PacketType::MessageSend));
-	header.messageID_	= htonl(messageID);
-	header.sessionID_	= htonl(sessionID);
-	header.messageLen_	= htons(static_cast<uint16_t>(body.size()));
-	std::vector<uint8_t> result;
-	appendBytes(result, &header, sizeof(header));
-	appendBytes(result, body.data, body.size());
-	
-	return result;
+	return buildPacket(PacketType::MessageSend, messageID, sessionID, body);
 }
 
-
-
-
-
-
-
-
-
-
-
+std::vector<uint8_t> Serializer::buildDisconnectRequestPacket(uint32_t messageID, uint32_t sessionID)
+{
+	return buildPacket(PacketType::DisconnectRequest, messageID, sessionID);
+}

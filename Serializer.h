@@ -2,6 +2,7 @@
 #include "Packets.h"
 #include <cstdint>
 #include <vector>
+
 class Serializer
 {
 public:
@@ -17,7 +18,8 @@ public:
 	
 private:
 	static void appendBytes(std::vector<uint8_t>& dest, const void* src, size_t count);
-	void writeUint16(std::vector<uint8_t>& buf, uint16_t val);
-	void writeUint32(std::vector<uint8_t>& buf, uint32_t val);
-	void writeString(std::vector<uint8_t>& buf, const std::string& str);
+	static void writeUint16(std::vector<uint8_t>& buf, uint16_t val);
+	static void writeUint32(std::vector<uint8_t>& buf, uint32_t val);
+	static void writeString(std::vector<uint8_t>& buf, const std::string& str);
+	static std::vector<uint8_t> buildPacket(PacketType type, uint32_t messageID, uint32_t sessionID, const std::vector<uint8_t>& body = {});
 };
