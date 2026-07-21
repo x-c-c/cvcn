@@ -1,0 +1,19 @@
+PROJECT_NAME           = "CVCN Server"
+PROJECT_BRIEF          = "C++ chat server with epoll and binary protocol"
+OUTPUT_DIRECTORY       = ./docs
+CREATE_SUBDIRS         = NO
+OUTPUT_LANGUAGE        = Russian
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+
+INPUT                  = .
+RECURSIVE              = YES
+FILE_PATTERNS          = *.cpp *.h *.hpp
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+
+HAVE_DOT               = NO

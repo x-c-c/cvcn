@@ -1,70 +1,160 @@
+/**
+ * @file Epoller.cpp
+ * @brief Реализация мультиплексирования через epoll.
+ */
+
 #include "Epoller.h"
-Epoller::Epoller(): epollFd_(epoll_create1(0)), running_(true){}
+#include "ClientSession.h"
+#include <iostream>
+#include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
+
+Epoller::Epoller(): epollFileDescriptor_(epoll_create1(0)), running_(true){}
 Epoller::~Epoller()
 {
-	close(epollFd_);
-}
-
-void Epoller::addFdToEpoll(int fd, uint32_t events)
-{
-	epoll_event	ev;
-	ev.data.fd	= fd;
-	ev.events	= events;
-	epoll_ctl(epollFd_, EPOLL_CTL_ADD, fd, &ev);
-}
-
-void Epoller::removeFdFromEpoll(int fd)
-{
-	epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, nullptr);
-}
-
-void Epoller::handleNewConnection(int serverFd)
-{
-	int clientFd = accept(serverFd, nullptr, nullptr);
-	if (clientFd > 0)	// установить неблокирующий режим
+	for (std::unordered_map<int, ClientSession*>::iterator it = sessions_.begin();
+		 it != sessions_.end(); ++it)
 	{
-		int flags = fcntl(clientFd, F_GETFL, 0);
-		fcntl(clientFd, F_SETFL, flags | O_NONBLOCK);
-		addFdToEpoll(clientFd, EPOLLIN);
+		ClientSession* session = it->second;
+		if (!session->isClosed())
+			session->closeSession();
+		delete session;
+	}
+	sessions_.clear();
+	close(epollFileDescriptor_);
+}
+
+void Epoller::addFdToEpoll(int fileDescriptor, uint32_t events)
+{
+	epoll_event event;
+	event.data.fd = fileDescriptor;
+	event.events = events;
+	if (epoll_ctl(epollFileDescriptor_, EPOLL_CTL_ADD, fileDescriptor, &event) == -1)
+		perror("[ERROR] epoll_ctl add");
+}
+
+void Epoller::removeFdFromEpoll(int fileDescriptor)
+{
+	epoll_ctl(epollFileDescriptor_, EPOLL_CTL_DEL, fileDescriptor, nullptr);
+}
+
+void Epoller::modifyFdEvents(int fileDescriptor, uint32_t events)
+{
+	epoll_event event;
+	event.data.fd = fileDescriptor;
+	event.events = events;
+	if (epoll_ctl(epollFileDescriptor_, EPOLL_CTL_MOD, fileDescriptor, &event) == -1)
+		perror("[ERROR] epoll_ctl mod");
+}
+
+void Epoller::handleNewConnection(int serverSocketDescriptor)
+{
+	int clientDescriptor = accept(serverSocketDescriptor, nullptr, nullptr);
+	if (clientDescriptor > 0)
+	{
+		int flags = fcntl(clientDescriptor, F_GETFL, 0);
+		if (flags == -1)
+		{
+			perror("[ERROR] fcntl getfl");
+			close(clientDescriptor);
+			return;
+		}
+		if (fcntl(clientDescriptor, F_SETFL, flags | O_NONBLOCK) == -1)
+		{
+			perror("[ERROR] fcntl setfl");
+			close(clientDescriptor);
+			return;
+		}
+		addFdToEpoll(clientDescriptor, EPOLLIN | EPOLLET);
+		sessions_[clientDescriptor] = new ClientSession(clientDescriptor, this);
+		std::cout << "[Epoller] new client fd=" << clientDescriptor << std::endl;
 	}
 	else
 	{
-		perror("accept error");
+		perror("[ERROR] accept error");
 	}
 }
 
-void Epoller::closeConnection(int fd)
+void Epoller::closeClient(int fileDescriptor)
 {
-	removeFdFromEpoll(fd);
-	close(fd);
+	removeFdFromEpoll(fileDescriptor);
+	std::unordered_map<int, ClientSession*>::iterator it = sessions_.find(fileDescriptor);
+	if (it != sessions_.end())
+	{
+		ClientSession* session = it->second;
+		if (!session->isClosed())
+			session->closeSession();
+		delete session;
+		sessions_.erase(it);
+	}
+	else
+	{
+		close(fileDescriptor);
+	}
 }
 
-void Epoller::startEpollLoop(int serverSocketFd)
+void Epoller::startEpollLoop(int serverSocketDescriptor)
 {
-	// сделать серверный сокет неблокирующим
-	int flags = fcntl(serverSocketFd, F_GETFL, 0);
-	fcntl(serverSocketFd, F_SETFL, flags | O_NONBLOCK);
-	addFdToEpoll(serverSocketFd, EPOLLIN);
+	int flags = fcntl(serverSocketDescriptor, F_GETFL, 0);
+	if (flags != -1)
+		fcntl(serverSocketDescriptor, F_SETFL, flags | O_NONBLOCK);
+	addFdToEpoll(serverSocketDescriptor, EPOLLIN);
 
-	epoll_event readyEvents[MAX_EVENTS];
+	epoll_event readyEvents[maxEvents];
 	while (running_)
 	{
-		int ev_count = epoll_wait(epollFd_, readyEvents, MAX_EVENTS, 1000);
-		for (int i = 0; i < ev_count; ++i)
+		int eventCount = epoll_wait(epollFileDescriptor_, readyEvents, maxEvents, 1000);
+		if (eventCount == -1)
+		{
+			if (errno == EINTR)
+				continue;
+			perror("[ERROR] epoll_wait");
+			break;
+		}
+		for (int i = 0; i < eventCount; ++i)
 		{
 			int sockFd = readyEvents[i].data.fd;
-			if (readyEvents[i].events & (EPOLLERR | EPOLLHUP))	// сначала обрабатываем ошибки/закрытие
+			uint32_t events = readyEvents[i].events;
+
+			if (events & (EPOLLERR | EPOLLHUP))
 			{
-				closeConnection(sockFd);
-				continue;   // пропускаем обработку чтения для этого сокета
+				if (sockFd == serverSocketDescriptor)
+				{
+					std::cerr << "[Epoller] error on server socket, stopping" << std::endl;
+					running_ = false;
+					break;
+				}
+				else
+				{
+					closeClient(sockFd);
+				}
+				continue;
 			}
-			if (readyEvents[i].events & EPOLLIN)	// затем обрабатываем готовность к чтению
+
+			if (events & EPOLLIN)
 			{
-				if (sockFd == serverSocketFd)
+				if (sockFd == serverSocketDescriptor)
 					handleNewConnection(sockFd);
 				else
-					// give client_sockfd to class;
+				{
+					std::unordered_map<int, ClientSession*>::iterator it = sessions_.find(sockFd);
+					if (it != sessions_.end())
+						it->second->handleRead();
+				}
+			}
+
+			if (events & EPOLLOUT)
+			{
+				std::unordered_map<int, ClientSession*>::iterator it = sessions_.find(sockFd);
+				if (it != sessions_.end())
+					it->second->handleWrite();
 			}
 		}
 	}
+}
+
+void Epoller::stopEpollLoop()
+{
+	running_ = false;
 }

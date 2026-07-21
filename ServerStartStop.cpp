@@ -1,28 +1,31 @@
+/**
+ * @file ServerStartStop.cpp
+ * @brief Реализация запуска сервера.
+ */
+
 #include "ServerStartStop.h"
 #include <iostream>
 #include "Epoller.h"
+
 void ServerStartStop::start(const ServerConfig& config)
 {
-	// socket, bind, listen
-	serverSocketFileDescriptor	= socket(config.getDomain(), config.getType(), config.getProtocol());
-	
-	int opt = 1;
-	setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-	
-	sockaddr_in	serverAddr{};
-	serverAddr.sin_family		= config.getDomain();
-	serverAddr.sin_addr.s_addr	= config.getAddr();
-	serverAddr.sin_port			= htons(config.getPort()); 
-	
-	sockaddr*	serverAddrPtr	= reinterpret_cast<sockaddr*>(&serverAddr);
-	socklen_t	serverAddrLen	= sizeof(serverAddr);
-	bind(serverSocketFileDescriptor, serverAddrPtr, serverAddrLen);
+	serverSocketFileDescriptor = socket(config.getDomain(), config.getType(), config.getProtocol());
+
+	int reuseAddrOption = 1;
+	setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &reuseAddrOption, sizeof(reuseAddrOption));
+
+	sockaddr_in serverAddr{};
+	serverAddr.sin_family      = config.getDomain();
+	serverAddr.sin_addr.s_addr = config.getAddr();
+	serverAddr.sin_port        = htons(config.getPort());
+
+	bind(serverSocketFileDescriptor, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
 	listen(serverSocketFileDescriptor, SOMAXCONN);
-	
-	Epoller epoller{};
+
+	Epoller epoller;
 	epoller.startEpollLoop(serverSocketFileDescriptor);
 
 	close(serverSocketFileDescriptor);
 }
 
-void ServerStartStop::stop(){}
+void ServerStartStop::stop() {}
