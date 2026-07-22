@@ -14,8 +14,7 @@ public:
 	/**
 	 * @brief Конструктор с ручным заданием параметров.
 	 */
-	ServerConfig(int domain, int type, int protocol, int port)
-		: domain_(domain), type_(type), protocol_(protocol), port_(port) {}
+	ServerConfig(int domain, int type, int protocol, int port): domain_(domain), type_(type), protocol_(protocol), port_(port) {}
 
 	/** @name Геттеры */
 	///@{
@@ -33,9 +32,9 @@ public:
 	///@}
 
 private:
-	int domain_		= AF_INET;       ///< Домен сокета (IPv4).
-	int type_		= SOCK_STREAM;   ///< Тип сокета (потоковый).
-	int protocol_	= IPPROTO_TCP;   ///< Протокол (TCP).
-	in_addr_t addr_	= INADDR_ANY;  ///< Принимать соединения со всех интерфейсов.
-	int port_		= 55550;         ///< Порт по умолчанию.
+	int domain_		= AF_INET;					///< Домен сокета (IPv4).
+	int type_		= SOCK_STREAM;				///< Тип сокета (потоковый).
+	int protocol_	= IPPROTO_TCP;				///< Протокол (TCP).
+	in_addr_t addr_	= INADDR_ANY;				///< Принимать соединения со всех интерфейсов.
+	int port_		= 55550;					///< Порт по умолчанию.
 };
