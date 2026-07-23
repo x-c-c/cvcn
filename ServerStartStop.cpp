@@ -6,11 +6,6 @@
 #include "ServerStartStop.h"
 #include "Epoller.h"
 
-bool ServerStartStop::isPortFree()
-{
-	
-}
-
 void ServerStartStop::initServerAddr(const ServerConfig& config)
 {
 	serverAddr.sin_family      = config.getDomain();
@@ -25,7 +20,7 @@ void ServerStartStop::start(const ServerConfig& config)
 	initServerAddr(config);
 	bind(serverSocketFileDescriptor, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
 	listen(serverSocketFileDescriptor, SOMAXCONN);
-
+	
 	Epoller epoller;
 	epoller.startEpollLoop(serverSocketFileDescriptor);
 

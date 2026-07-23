@@ -15,7 +15,6 @@ private:
 	sockaddr_in serverAddr{};
 	static constexpr int reuseAddrOption = 1;	///< Значение для SO_REUSEADDR (1 — разрешить)
 	
-	bool isPortFree();
 	void initServerAddr(const ServerConfig& config);
 public:
 	/**
