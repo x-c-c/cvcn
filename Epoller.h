@@ -8,7 +8,7 @@
 #pragma once
 #include <sys/epoll.h>
 #include <unordered_map>
-
+#include <atomic>
 class ClientSession;
 
 class Epoller
@@ -48,10 +48,10 @@ public:
 	void closeClient(int fileDescriptor);
 
 private:
-	static constexpr int maxEvents = 1024;          ///< Максимальное число событий за один epoll_wait.
-	int epollFileDescriptor_;                       ///< Файловый дескриптор epoll.
-	bool running_ = true;                           ///< Флаг работы главного цикла.
-	std::unordered_map<int, ClientSession*> sessions_; ///< Карта активных сессий (fd → объект).
+	static constexpr int maxEvents = 1024;				///< Максимальное число событий за один epoll_wait.
+	int epollFileDescriptor_;							///< Файловый дескриптор epoll.
+	std::atomic<bool> running_{true};					///< Флаг работы главного цикла.
+	std::unordered_map<int, ClientSession*> sessions_;	///< Карта активных сессий (fd → объект).
 
 	/**
 	 * @brief Добавляет дескриптор в epoll с заданной маской событий.

@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include "Logger.h"
 
 bool tryCreateSocketOnPort(int port)
 {
@@ -41,6 +42,7 @@ int getValidPort(int defaultPort)
 			if (tryCreateSocketOnPort(defaultPort))
 			{
 				std::cout << "Server will start on port: " << defaultPort << std::endl;
+				Logger::instance().info("Selected port {}", defaultPort);
 				return defaultPort;
 			}
 			else
@@ -61,6 +63,7 @@ int getValidPort(int defaultPort)
 			if (tryCreateSocketOnPort(port))
 			{
 				std::cout << "Server start on port: " << port << std::endl;
+				Logger::instance().info("Selected port {}", port);
 				return port;
 			}
 			else

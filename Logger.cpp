@@ -12,6 +12,7 @@ Logger::Logger()
 	logger_ = std::make_shared<spdlog::logger>(LOGGER_NAME, sinks.begin(), sinks.end());
 	logger_->set_level(spdlog::level::trace);
 	logger_->set_pattern(PATTERN);
+	logger_->flush_on(spdlog::level::info);
 }
 
 Logger::~Logger()

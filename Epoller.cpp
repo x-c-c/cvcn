@@ -102,7 +102,7 @@ void Epoller::startEpollLoop(int serverSocketDescriptor)
 	addFdToEpoll(serverSocketDescriptor, EPOLLIN);
 
 	epoll_event readyEvents[maxEvents];
-	while (running_)
+	while (running_.load())
 	{
 		int eventCount = epoll_wait(epollFileDescriptor_, readyEvents, maxEvents, 1000);
 		if (eventCount == -1)

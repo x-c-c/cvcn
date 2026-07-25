@@ -4,7 +4,20 @@
  */
 
 #include "ServerStartStop.h"
-#include "Epoller.h"
+#include "Logger.h"
+#include <csignal>
+
+Epoller* ServerStartStop::currentEpoller_ = nullptr;
+
+void ServerStartStop::handleSignal(int signum)
+{
+	if (signum == SIGINT || signum == SIGTERM)
+	{
+		Logger::instance().warn("Received signal {}, shutting down", signum);
+		if (currentEpoller_)
+			currentEpoller_->stopEpollLoop();
+	}
+}
 
 void ServerStartStop::initServerAddr(const ServerConfig& config)
 {
@@ -21,13 +34,16 @@ void ServerStartStop::start(const ServerConfig& config)
 	bind(serverSocketFileDescriptor, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
 	listen(serverSocketFileDescriptor, SOMAXCONN);
 	
+	Logger::instance().info("Server listening on port {}", config.getPort());
+
 	Epoller epoller;
+	currentEpoller_ = &epoller;							// сохраняем указатель для остановки по сигналу
 	epoller.startEpollLoop(serverSocketFileDescriptor);
+	currentEpoller_ = nullptr;
 
 	close(serverSocketFileDescriptor);
+	Logger::instance().info("Server stopped");
 }
-
-void ServerStartStop::stop() {}
 
 
 

@@ -17,7 +17,7 @@ private:
 	static constexpr size_t MAX_FILE_SIZE		= 5 * 1024 * 1024;
 	static constexpr size_t MAX_FILE_COUNT		= 3;
 	static constexpr const char* LOGGER_NAME	= "server_logger";
-	static constexpr const char* PATTERN		= "[%Y-%m-%d %H-%M-%S.%e] [%^%1%$] [thread %t] %v";
+	static constexpr const char* PATTERN		= "[%Y-%m-%d %H-%M-%S.%e] [%^%l%$] [thread %t] %v";
 	
 public:
 	static Logger& instance();
