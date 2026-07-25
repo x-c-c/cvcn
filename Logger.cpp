@@ -9,7 +9,7 @@ Logger::Logger()
 	fileSink->set_level(spdlog::level::trace);
 	
 	std::vector<spdlog::sink_ptr> sinks = {consoleSink, fileSink};
-	logger_ = std::make_shared<spdlog::logger>(LOGGER_NAME, sinks.begin, sinks.end());
+	logger_ = std::make_shared<spdlog::logger>(LOGGER_NAME, sinks.begin(), sinks.end());
 	logger_->set_level(spdlog::level::trace);
 	logger_->set_pattern(PATTERN);
 }
@@ -18,7 +18,7 @@ Logger::~Logger()
 {
 	if (logger_)
 	{
-		logger_.flush();
+		logger_->flush();
 		spdlog::drop(logger_->name());
 	}
 }

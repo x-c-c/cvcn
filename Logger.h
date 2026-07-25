@@ -2,14 +2,11 @@
 #include <string>
 #include <memory>
 #include <vector>
-
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/fmt/bundled/format.h>
-
+#include <fmt/format.h>
 namespace spdlog { class logger; }
-
 class Logger
 {
 private:
@@ -25,22 +22,22 @@ private:
 public:
 	static Logger& instance();
 	Logger(const Logger&) = delete;
-	Logger& operator(const Logger&) = delete;
+	Logger& operator=(const Logger&) = delete;
 	
-	void trace(const string& message);
-	void debug(const string& message);
-	void info(const string& message);
-	void warn(const string& message);
-	void error(const string& message);
-	void critical(const string& message);
+	void trace(const std::string& message);
+	void debug(const std::string& message);
+	void info(const std::string& message);
+	void warn(const std::string& message);
+	void error(const std::string& message);
+	void critical(const std::string& message);
 	
 	// Принимает строку с {} и любое количество аргументов любых типов
-	template<typename... Args> void trace(const string& str, Args&&...)
+	template<typename... Args> void trace(const std::string& str, Args&&... args)
 	{
 		/* 
 		 * fmt::format подставляет args вместо {} в format и возвращает готовую строку.
 		 * std::forward<Args>(args)... передаёт каждый аргумент без лишнего копирования.
-		 * После этого вызывается обычный trace(const std::string&) для записи в лог.
+		 * После этого вызывается обычный trace(const std::std::string&) для записи в лог.
 		
 						Пример использования
 						
@@ -50,23 +47,23 @@ public:
 		 */
 		trace(fmt::format(str, std::forward<Args>(args)...));
 	}
-	template<typename... Args> void debug(const string& str, Args&&...)
+	template<typename... Args> void debug(const std::string& str, Args&&... args)
 	{
 		debug(fmt::format(str, std::forward<Args>(args)...));
 	}
-	template<typename... Args> void info(const string& str, Args&&...)
+	template<typename... Args> void info(const std::string& str, Args&&... args)
 	{
 		info(fmt::format(str, std::forward<Args>(args)...));
 	}
-	template<typename... Args> void warn(const string& str, Args&&...)
+	template<typename... Args> void warn(const std::string& str, Args&&... args)
 	{
 		warn(fmt::format(str, std::forward<Args>(args)...));
 	}
-	template<typename... Args> void error(const string& str, Args&&...)
+	template<typename... Args> void error(const std::string& str, Args&&... args)
 	{
 		error(fmt::format(str, std::forward<Args>(args)...));
 	}
-	template<typename... Args> void critical(const string& str, Args&&...)
+	template<typename... Args> void critical(const std::string& str, Args&&... args)
 	{
 		critical(fmt::format(str, std::forward<Args>(args)...));
 	}
