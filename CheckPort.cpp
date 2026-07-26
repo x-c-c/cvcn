@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <cstring>
 #include "Logger.h"
 
 bool tryCreateSocketOnPort(int port)
@@ -34,20 +35,19 @@ int getValidPort(int defaultPort)
 		std::cout << "Input port (1..65535, Enter for default " << defaultPort << "): ";
 		if (!std::getline(std::cin, line))
 		{
-			std::cerr << "Input error, exiting" << std::endl;
+			Logger::instance().error("Input error, exiting: {}", strerror(errno));
 			exit(1);
 		}
 		if (line.empty())
 		{
 			if (tryCreateSocketOnPort(defaultPort))
 			{
-				std::cout << "Server will start on port: " << defaultPort << std::endl;
-				Logger::instance().info("Selected port {}", defaultPort);
+				Logger::instance().info("Selected default port {}", defaultPort);
 				return defaultPort;
 			}
 			else
 			{
-				std::cerr << "Port " << defaultPort << " is already in use" << std::endl;
+				Logger::instance().error("Default port {} is already in use: {}", defaultPort, strerror(errno));
 				continue;
 			}
 		}
@@ -57,27 +57,26 @@ int getValidPort(int defaultPort)
 			int port = std::stoi(line);
 			if (port < 1 || port > 65535)
 			{
-				std::cerr << "Port out of range (1...65535)" << std::endl;
+				Logger::instance().error("Port {} out of range (1...65535): {}", port, strerror(errno));
 				continue;
 			}
 			if (tryCreateSocketOnPort(port))
 			{
-				std::cout << "Server start on port: " << port << std::endl;
 				Logger::instance().info("Selected port {}", port);
 				return port;
 			}
 			else
 			{
-				std::cerr << "Port " << port << " is already in use" << std::endl;
+				Logger::instance().error("Port {} is already in use: {}", port, strerror(errno));
 			}
 		}
 		catch (const std::invalid_argument&)
 		{
-			std::cerr << "Not a valid number" << std::endl;
+			Logger::instance().error("Invalid port number entered: '{}'", line);
 		}
 		catch (const std::out_of_range&)
 		{
-			std::cerr << "Number out of range" << std::endl;
+			Logger::instance().error("Port number out of integer range: '{}'", line);
 		}
 	}
 }

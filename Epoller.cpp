@@ -5,11 +5,10 @@
 
 #include "Epoller.h"
 #include "ClientSession.h"
-#include <iostream>
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include "Logger.h"
 Epoller::Epoller(): epollFileDescriptor_(epoll_create1(0)), running_(true){}
 Epoller::~Epoller()
 {
@@ -31,7 +30,7 @@ void Epoller::addFdToEpoll(int fileDescriptor, uint32_t events)
 	event.data.fd = fileDescriptor;
 	event.events = events;
 	if (epoll_ctl(epollFileDescriptor_, EPOLL_CTL_ADD, fileDescriptor, &event) == -1)
-		perror("[ERROR] epoll_ctl add");
+		Logger::instance().error("epoll_ctl ADD failed for fd {}: {}", fileDescriptor, strerror(errno));
 }
 
 void Epoller::removeFdFromEpoll(int fileDescriptor)
@@ -45,7 +44,7 @@ void Epoller::modifyFdEvents(int fileDescriptor, uint32_t events)
 	event.data.fd = fileDescriptor;
 	event.events = events;
 	if (epoll_ctl(epollFileDescriptor_, EPOLL_CTL_MOD, fileDescriptor, &event) == -1)
-		perror("[ERROR] epoll_ctl mod");
+		Logger::instance().error("epoll_ctl MOD failed for fd {}: {}", fileDescriptor, strerror(errno));
 }
 
 void Epoller::handleNewConnection(int serverSocketDescriptor)
@@ -56,23 +55,23 @@ void Epoller::handleNewConnection(int serverSocketDescriptor)
 		int flags = fcntl(clientDescriptor, F_GETFL, 0);
 		if (flags == -1)
 		{
-			perror("[ERROR] fcntl getfl");
+			Logger::instance().error("fcntl F_GETFL failed for fd {}: {}", clientDescriptor, strerror(errno));
 			close(clientDescriptor);
 			return;
 		}
 		if (fcntl(clientDescriptor, F_SETFL, flags | O_NONBLOCK) == -1)
 		{
-			perror("[ERROR] fcntl setfl");
+			Logger::instance().error("fcntl F_SETFL O_NONBLOCK failed for fd {}: {}", clientDescriptor, strerror(errno));
 			close(clientDescriptor);
 			return;
 		}
 		addFdToEpoll(clientDescriptor, EPOLLIN | EPOLLET);
 		sessions_[clientDescriptor] = new ClientSession(clientDescriptor, this);
-		std::cout << "[Epoller] new client fd=" << clientDescriptor << std::endl;
+		Logger::instance().info("New client connected, fd={}", clientDescriptor);
 	}
 	else
 	{
-		perror("[ERROR] accept error");
+		Logger::instance().error("accept() failed: {}", strerror(errno));
 	}
 }
 
@@ -101,15 +100,15 @@ void Epoller::startEpollLoop(int serverSocketDescriptor)
 		fcntl(serverSocketDescriptor, F_SETFL, flags | O_NONBLOCK);
 	addFdToEpoll(serverSocketDescriptor, EPOLLIN);
 
-	epoll_event readyEvents[maxEvents];
+	epoll_event readyEvents[MAX_EVENTS];
 	while (running_.load())
 	{
-		int eventCount = epoll_wait(epollFileDescriptor_, readyEvents, maxEvents, 1000);
+		int eventCount = epoll_wait(epollFileDescriptor_, readyEvents, MAX_EVENTS, WAIT_IN_MILLISECOND);
 		if (eventCount == -1)
 		{
 			if (errno == EINTR)
 				continue;
-			perror("[ERROR] epoll_wait");
+			Logger::instance().critical("epoll_wait failed: {}", strerror(errno));;
 			break;
 		}
 		for (int i = 0; i < eventCount; ++i)
@@ -121,7 +120,7 @@ void Epoller::startEpollLoop(int serverSocketDescriptor)
 			{
 				if (sockFd == serverSocketDescriptor)
 				{
-					std::cerr << "[Epoller] error on server socket, stopping" << std::endl;
+					Logger::instance().critical("Critical error on server socket (fd {}), stopping", serverSocketDescriptor);
 					running_ = false;
 					break;
 				}

@@ -48,7 +48,8 @@ public:
 	void closeClient(int fileDescriptor);
 
 private:
-	static constexpr int maxEvents = 1024;				///< Максимальное число событий за один epoll_wait.
+	static constexpr int MAX_EVENTS = 1024;				///< Максимальное число событий за один epoll_wait.
+	static constexpr int WAIT_IN_MILLISECOND = 1000;	///< Промежутки времени через которые epoll опрашивает сокеты, измеряется в миллисекундах.
 	int epollFileDescriptor_;							///< Файловый дескриптор epoll.
 	std::atomic<bool> running_{true};					///< Флаг работы главного цикла.
 	std::unordered_map<int, ClientSession*> sessions_;	///< Карта активных сессий (fd → объект).

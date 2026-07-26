@@ -6,10 +6,11 @@
 #include "ServerConfig.h"
 #include "CheckPort.h"
 #include "ServerStartStop.h"
-#include <csignal>
+#include "SigintHandler.h"
 
 int main()
 {
+	SigintHandler::setup();
 	signal(SIGINT, ServerStartStop::handleSignal);
 	signal(SIGTERM, ServerStartStop::handleSignal);
 	
