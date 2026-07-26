@@ -15,6 +15,6 @@ bool tryCreateSocketOnPort(int port);
 /**
  * @brief Интерактивно запрашивает у пользователя свободный порт.
  * @param defaultPort порт, предлагаемый по умолчанию
- * @return гарантированно свободный порт
+ * @return гарантированно свободный порт или возвращает -1 при запросе остановки
  */
 int getValidPort(int defaultPort);

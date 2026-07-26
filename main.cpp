@@ -11,9 +11,7 @@
 int main()
 {
 	SigintHandler::setup();
-	signal(SIGINT, ServerStartStop::handleSignal);
-	signal(SIGTERM, ServerStartStop::handleSignal);
-	
+
 	Logger::instance().info("Server starting up");
 	ServerConfig config;
 	config.setPort(getValidPort(config.getPort()));

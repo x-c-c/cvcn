@@ -5,7 +5,7 @@ class SigintHandler
 {
 private:
 	static void handler(int signum);
-	static volatile sig_atomic_t stopRequested_ = 0;
+	static volatile sig_atomic_t stopRequested_;
 	
 public:
 	static void setup();

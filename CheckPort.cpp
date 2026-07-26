@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <cstring>
 #include "Logger.h"
-
+#include "SigintHandler.h"
 bool tryCreateSocketOnPort(int port)
 {
 	int testSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -30,7 +30,7 @@ bool tryCreateSocketOnPort(int port)
 int getValidPort(int defaultPort)
 {
 	std::string line;
-	while (true)
+	while (!SigintHandler::isStopRequested())
 	{
 		std::cout << "Input port (1..65535, Enter for default " << defaultPort << "): ";
 		if (!std::getline(std::cin, line))
@@ -79,4 +79,5 @@ int getValidPort(int defaultPort)
 			Logger::instance().error("Port number out of integer range: '{}'", line);
 		}
 	}
+	return -1;
 }

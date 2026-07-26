@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "Logger.h"
+#include "SigintHandler.h"
 Epoller::Epoller(): epollFileDescriptor_(epoll_create1(0)), running_(true){}
 Epoller::~Epoller()
 {
@@ -101,7 +102,7 @@ void Epoller::startEpollLoop(int serverSocketDescriptor)
 	addFdToEpoll(serverSocketDescriptor, EPOLLIN);
 
 	epoll_event readyEvents[MAX_EVENTS];
-	while (running_.load())
+	while (running_.load() && !SigintHandler::isStopRequested())
 	{
 		int eventCount = epoll_wait(epollFileDescriptor_, readyEvents, MAX_EVENTS, WAIT_IN_MILLISECOND);
 		if (eventCount == -1)
