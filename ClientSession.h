@@ -25,30 +25,22 @@ public:
 	 */
 	ClientSession(int socketDescriptor, Epoller* epoller);
 	~ClientSession();
-
-	/**
-	 * @brief Вызывается при готовности сокета к чтению (EPOLLIN).
-	 */
 	void handleRead();
-
-	/**
-	 * @brief Закрывает сокет и помечает сессию закрытой.
-	 */
 	void closeSession();
 
-	int getSocketDescriptor() const { return socketDescriptor_; }
-	bool isClosed() const            { return closed_; }
+	int getSocketDescriptor() const	{ return socketDescriptor_; }
+	bool isClosed() const			{ return closed_; }
 
 private:
 	friend class Epoller;   ///< Epoller имеет доступ к handleWrite и closeSession.
 
-	int socketDescriptor_;                           ///< Файловый дескриптор клиентского сокета.
-	bool closed_ = false;                            ///< Закрыта ли сессия.
-	Epoller* epoller_;                               ///< Указатель на Epoller для изменения событий.
-	std::vector<uint8_t> readBuffer_;                ///< Буфер накопления входящих данных.
-	static constexpr size_t maxBufferSize = 64 * 1024; ///< Предельный размер буфера.
-	std::deque<std::vector<uint8_t>> sendQueue_;     ///< Очередь исходящих сообщений.
-	bool writePending_ = false;                      ///< Ожидаем готовности сокета к записи.
+	int socketDescriptor_;								///< Файловый дескриптор клиентского сокета.
+	bool closed_ = false;								///< Закрыта ли сессия.
+	Epoller* epoller_;									///< Указатель на Epoller для изменения событий.
+	std::vector<uint8_t> readBuffer_;					///< Буфер накопления входящих данных.
+	static constexpr size_t maxBufferSize = 64 * 1024;	///< Предельный размер буфера.
+	std::deque<std::vector<uint8_t>> sendQueue_;		///< Очередь исходящих сообщений.
+	bool writePending_ = false;							///< Ожидаем готовности сокета к записи.
 
 	void tryExtractPackets();
 	bool extractPacket(PacketHeaderRaw& header, std::vector<uint8_t>& body);

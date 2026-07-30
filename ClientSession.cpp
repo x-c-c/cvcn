@@ -1,8 +1,3 @@
-/**
- * @file ClientSession.cpp
- * @brief Реализация сессии клиента.
- */
-
 #include "ClientSession.h"
 #include "Epoller.h"
 #include "Serializer.h"
@@ -11,12 +6,8 @@
 #include <cerrno>
 #include <arpa/inet.h>
 #include <unistd.h>
-
-ClientSession::ClientSession(int socketDescriptor, Epoller* epoller)
-	: socketDescriptor_(socketDescriptor), epoller_(epoller)
-{
-}
-
+#include "Logger.h"
+ClientSession::ClientSession(int socketDescriptor, Epoller* epoller): socketDescriptor_(socketDescriptor), epoller_(epoller){}
 ClientSession::~ClientSession()
 {
 	if (!closed_)
@@ -36,25 +27,19 @@ void ClientSession::handleRead()
 	}
 	else if (bytesRead == 0)
 	{
-		std::cout << "[Client " << socketDescriptor_ << "] connection closed by peer" << std::endl;
+		Logger::instance().info("Client {} connection closed by peer", socketDescriptor_);
 		closeSession();
 	}
 	else
 	{
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 		{
-			perror("recv error");
+			Logger::instance().error("recv error: {}", strerror(errno));
 			closeSession();
 		}
 	}
 }
 
-/**
- * @brief Пытается извлечь один полный пакет из буфера.
- * @param header заполняемый заголовок (хостовый порядок)
- * @param body   тело пакета
- * @return true, если пакет успешно извлечён
- */
 bool ClientSession::extractPacket(PacketHeaderRaw& header, std::vector<uint8_t>& body)
 {
 	if (readBuffer_.size() < sizeof(PacketHeaderRaw))
@@ -76,9 +61,6 @@ bool ClientSession::extractPacket(PacketHeaderRaw& header, std::vector<uint8_t>&
 	return true;
 }
 
-/**
- * @brief Извлекает все доступные полные пакеты и отправляет на обработку.
- */
 void ClientSession::tryExtractPackets()
 {
 	PacketHeaderRaw header;
@@ -91,9 +73,6 @@ void ClientSession::tryExtractPackets()
 	}
 }
 
-/**
- * @brief Определяет тип пакета и вызывает соответствующий обработчик.
- */
 void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
 {
 	switch (static_cast<PacketType>(header.type))
@@ -135,25 +114,17 @@ void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vect
 		break;
 
 	default:
-		std::cerr << "[Client " << socketDescriptor_ << "] unknown packet type 0x"
-				  << std::hex << header.type << std::dec << std::endl;
+		Logger::instance().error("Client {}  unknown packet type 0x{:X}",socketDescriptor_, header.type);
 		break;
 	}
 }
 
-/**
- * @brief Регистрирует интерес к EPOLLOUT и взводит флаг ожидания.
- */
 void ClientSession::armWriteNotification()
 {
 	epoller_->modifyFdEvents(socketDescriptor_, EPOLLIN | EPOLLOUT);
 	writePending_ = true;
 }
 
-/**
- * @brief Пытается отправить все сообщения из очереди.
- *        При блокировке сокета регистрирует EPOLLOUT.
- */
 void ClientSession::flushSendQueue()
 {
 	while (!sendQueue_.empty())
@@ -183,9 +154,6 @@ void ClientSession::flushSendQueue()
 	writePending_ = false;
 }
 
-/**
- * @brief Ставит данные в очередь отправки и инициирует запись.
- */
 void ClientSession::sendResponse(const std::vector<uint8_t>& data)
 {
 	if (closed_)
@@ -195,9 +163,6 @@ void ClientSession::sendResponse(const std::vector<uint8_t>& data)
 		flushSendQueue();
 }
 
-/**
- * @brief Вызывается Epoller'ом при событии EPOLLOUT.
- */
 void ClientSession::handleWrite()
 {
 	if (closed_)
@@ -206,13 +171,6 @@ void ClientSession::handleWrite()
 	flushSendQueue();
 }
 
-// ----------------------------------------------------------------
-// Обработчики команд (заглушки, позже подключатся к БД)
-// ----------------------------------------------------------------
-
-/**
- * @brief Обрабатывает запрос подключения: генерирует идентификатор сессии и отвечает.
- */
 void ClientSession::handleConnectRequestPacket(uint32_t messageID, uint32_t sessionID)
 {
 	uint32_t newSessionID = sessionID ? sessionID : static_cast<uint32_t>(socketDescriptor_);
@@ -220,9 +178,6 @@ void ClientSession::handleConnectRequestPacket(uint32_t messageID, uint32_t sess
 	sendResponse(response);
 }
 
-/**
- * @brief Обрабатывает запрос регистрации (пока всегда успешно).
- */
 void ClientSession::handleRegisterRequestPacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestPacket& packet)
 {
 	RegisterResponsePacket responsePkt;
@@ -231,9 +186,6 @@ void ClientSession::handleRegisterRequestPacket(uint32_t messageID, uint32_t ses
 	sendResponse(response);
 }
 
-/**
- * @brief Обрабатывает запрос аутентификации (пока всегда успешно).
- */
 void ClientSession::handleAuthRequestPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestPacket& packet)
 {
 	AuthResponsePacket responsePkt;
@@ -242,26 +194,17 @@ void ClientSession::handleAuthRequestPacket(uint32_t messageID, uint32_t session
 	sendResponse(response);
 }
 
-/**
- * @brief Выводит полученное сообщение в лог.
- */
 void ClientSession::handleMessageSendPacket(uint32_t messageID, uint32_t sessionID, const MessageSendPacket& packet)
 {
 	std::cout << "[Client " << socketDescriptor_ << "] Message from " << packet.senderID
 			  << " to chat " << packet.chatID << ": " << packet.text << std::endl;
 }
 
-/**
- * @brief Обрабатывает запрос отключения – закрывает сессию.
- */
 void ClientSession::handleDisconnectRequestPacket()
 {
 	closeSession();
 }
 
-/**
- * @brief Закрывает клиентский сокет и помечает сессию закрытой.
- */
 void ClientSession::closeSession()
 {
 	if (closed_)
