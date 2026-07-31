@@ -7,16 +7,19 @@
 #include "CheckPort.h"
 #include "ServerStartStop.h"
 #include "SigintHandler.h"
+#include "Database.h"
+
 
 int main()
 {
 	SigintHandler::setup();
 
 	Logger::instance().info("Server starting up");
+	Database db("chat.db");	
 	ServerConfig config;
 	config.setPort(getValidPort(config.getPort()));
 	ServerStartStop server;
-	server.start(config);
+	server.start(config, &db);
 	Logger::instance().info("Server shutdown");
 	return 0;
 }

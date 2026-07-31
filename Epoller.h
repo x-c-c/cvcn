@@ -10,14 +10,14 @@
 #include <unordered_map>
 #include <atomic>
 class ClientSession;
-
+class Database;
 class Epoller
 {
 public:
 	/**
 	 * @brief Конструктор – создаёт epoll-дескриптор.
 	 */
-	Epoller();
+	Epoller(Database* db);
 	/**
 	 * @brief Деструктор – закрывает все клиентские сессии и epoll.
 	 */
@@ -46,8 +46,10 @@ public:
 	 * @param fileDescriptor файловый дескриптор клиента
 	 */
 	void closeClient(int fileDescriptor);
+	Database* Epoller::getDatabase(){ return db_; };
 
 private:
+	Database* db_;
 	static constexpr int MAX_EVENTS = 1024;				///< Максимальное число событий за один epoll_wait.
 	static constexpr int WAIT_IN_MILLISECOND = 1000;	///< Промежутки времени через которые epoll опрашивает сокеты, измеряется в миллисекундах.
 	int epollFileDescriptor_;							///< Файловый дескриптор epoll.

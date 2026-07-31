@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include "Logger.h"
 #include "SigintHandler.h"
-Epoller::Epoller(): epollFileDescriptor_(epoll_create1(0)), running_(true){}
+Epoller::Epoller(): epollFileDescriptor_(epoll_create1(0)), running_(true), db_(db){}
 Epoller::~Epoller()
 {
 	for (std::unordered_map<int, ClientSession*>::iterator it = sessions_.begin();

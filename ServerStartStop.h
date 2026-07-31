@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "Epoller.h"
+class Database;
 class ServerStartStop
 {
 private:
@@ -22,7 +23,7 @@ public:
 	 * @brief Создаёт сокет, привязывает к адресу, слушает и запускает цикл epoll.
 	 * @param config конфигурация сервера
 	 */
-	void start(const ServerConfig& config);
+	void start(const ServerConfig& config, Database* db);
 	/**
 	 * @brief Заглушка для будущей мягкой остановки.
 	 */

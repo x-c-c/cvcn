@@ -5,6 +5,7 @@
 
 #include "ServerStartStop.h"
 #include "Logger.h"
+#include "Database.h"
 #include <csignal>
 
 Epoller* ServerStartStop::currentEpoller_ = nullptr;
@@ -26,21 +27,16 @@ void ServerStartStop::initServerAddr(const ServerConfig& config)
 	serverAddr.sin_port        = htons(config.getPort());
 }
 
-void ServerStartStop::start(const ServerConfig& config)
+void ServerStartStop::start(const ServerConfig& config, Database* db)
 {
 	serverSocketFileDescriptor = socket(config.getDomain(), config.getType(), config.getProtocol());
 	setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &reuseAddrOption, sizeof(reuseAddrOption));
 	initServerAddr(config);
 	bind(serverSocketFileDescriptor, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
 	listen(serverSocketFileDescriptor, SOMAXCONN);
-	
 	Logger::instance().info("Server listening on port {}", config.getPort());
-
-	Epoller epoller;
-	currentEpoller_ = &epoller;							// сохраняем указатель для остановки по сигналу
+	Epoller epoller(db);								// <-- передаём БД;
 	epoller.startEpollLoop(serverSocketFileDescriptor);
-	currentEpoller_ = nullptr;
-
 	close(serverSocketFileDescriptor);
 	Logger::instance().info("Server stopped");
 }
