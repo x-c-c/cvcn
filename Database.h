@@ -20,5 +20,5 @@ public:
 	int getUserID(const std::string& username);
 	
 	// Чаты
-	int createChat(bool isGroup, const std::string& name);
+	//int createChat(bool isGroup, const std::string& name);
 };

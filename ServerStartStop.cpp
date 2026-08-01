@@ -1,24 +1,8 @@
-/**
- * @file ServerStartStop.cpp
- * @brief Реализация запуска сервера.
- */
-
 #include "ServerStartStop.h"
+#include "Epoller.h"
 #include "Logger.h"
 #include "Database.h"
-#include <csignal>
-
-Epoller* ServerStartStop::currentEpoller_ = nullptr;
-
-void ServerStartStop::handleSignal(int signum)
-{
-	if (signum == SIGINT || signum == SIGTERM)
-	{
-		Logger::instance().warn("Received signal {}, shutting down", signum);
-		if (currentEpoller_)
-			currentEpoller_->stopEpollLoop();
-	}
-}
+#include <cstring>
 
 void ServerStartStop::initServerAddr(const ServerConfig& config)
 {
@@ -30,16 +14,27 @@ void ServerStartStop::initServerAddr(const ServerConfig& config)
 void ServerStartStop::start(const ServerConfig& config, Database* db)
 {
 	serverSocketFileDescriptor = socket(config.getDomain(), config.getType(), config.getProtocol());
+	if (serverSocketFileDescriptor < 0)
+	{
+		Logger::instance().critical("socket() failed: {}", strerror(errno));
+		return;
+	}
 	setsockopt(serverSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &reuseAddrOption, sizeof(reuseAddrOption));
 	initServerAddr(config);
-	bind(serverSocketFileDescriptor, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
+	if (bind(serverSocketFileDescriptor, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) != 0)
+	{
+		Logger::instance().critical("bind() on port {} failed: {}", config.getPort(), strerror(errno));
+		close(serverSocketFileDescriptor);
+		return;
+	}
 	listen(serverSocketFileDescriptor, SOMAXCONN);
 	Logger::instance().info("Server listening on port {}", config.getPort());
-	Epoller epoller(db);								// <-- передаём БД;
+
+	Epoller epoller(db);
 	epoller.startEpollLoop(serverSocketFileDescriptor);
+
 	close(serverSocketFileDescriptor);
 	Logger::instance().info("Server stopped");
 }
 
-
-
+void ServerStartStop::stop(){}	//потом добавлю
