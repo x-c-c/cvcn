@@ -1,6 +1,5 @@
 #pragma once
 #include <netinet/in.h>
-
 class ClientConfig
 {
 public:
@@ -21,5 +20,6 @@ private:
 	int type_		= SOCK_STREAM;				///< Тип сокета (потоковый).
 	int protocol_	= IPPROTO_TCP;				///< Протокол (TCP).
 	in_addr_t addr_	= INADDR_LOOPBACK;			///< Принимать соединения со всех интерфейсов.
+	//in_addr_t addr_ = inet_addr("127.0.0.1");
 	int port_		= 55550;					///< Порт по умолчанию.
 };
