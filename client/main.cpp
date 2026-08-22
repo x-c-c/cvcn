@@ -2,8 +2,11 @@
 #include <unistd.h>
 #include <iostream>
 #include <arpa/inet.h>
+#include <vector>
 #include "ClientConfig.h"
 #include "Logger.h"
+#include "Packets.h"
+#include "Serializer.h"
 
 sockaddr_in initServerAddr(const ClientConfig& config)
 {
@@ -29,6 +32,26 @@ int main()
 		Logger::instance().error("Client connect error: {}", strerror(errno));
 		return 1;
 	}
+	
+	std::string username = "Chito Dristo";
+	std::string password = "tralalala09";
+	
+	PacketHeaderRaw header;
+	header.type = (uint16_t)PacketType::RegisterRequest;
+	header.messageID = 1;
+	header.sessionID = 1;
+	header.messageLen = username.size() + password.size();
+	
+	RegisterRequestPacket packet;
+	packet.username = username;
+	packet.password = password;
+	
+	Serializer serializer;
+	std::vector<uint8_t> message = serializer.buildRegisterRequestPacket(header.messageID, header.sessionID, packet);
+	
+	send(clientSocketFd, message.data(), message.size(), 0);
+	
+	
 	
 	close(clientSocketFd);
 	Logger::instance().info("Client stopped");
