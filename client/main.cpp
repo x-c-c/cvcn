@@ -3,6 +3,8 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <vector>
+#include <QApplication>
+#include <QWidget>
 #include "ClientConfig.h"
 #include "Logger.h"
 #include "Packets.h"
@@ -17,8 +19,15 @@ sockaddr_in initServerAddr(const ClientConfig& config)
 	return addr;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+	QApplication app(argc, argv);
+	QWidget window;
+	window.show();
+	app.exec();
+	
+	
+	
 	ClientConfig config;
 	int clientSocketFd = socket(config.getDomain(), config.getType(), config.getProtocol());
 	if (clientSocketFd < 0)
