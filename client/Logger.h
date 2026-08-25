@@ -13,10 +13,10 @@ private:
 	Logger();
 	~Logger();
 	std::shared_ptr<spdlog::logger> logger_;
-	static constexpr const char* LOG_FILE_PATH	= "logs/server.log";
+    static constexpr const char* LOG_FILE_PATH	= "logs/client.log";
 	static constexpr size_t MAX_FILE_SIZE		= 5 * 1024 * 1024;
 	static constexpr size_t MAX_FILE_COUNT		= 3;
-	static constexpr const char* LOGGER_NAME	= "server_logger";
+    static constexpr const char* LOGGER_NAME	= "client_logger";
 	static constexpr const char* PATTERN		= "[%Y-%m-%d %H-%M-%S.%e] [%^%l%$] [thread %t] %v";
 	
 public:
