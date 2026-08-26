@@ -11,5 +11,3 @@ void Controller::slotOnConnectRequested(QString& username, QString& password)
 {
 
 }
-
-
