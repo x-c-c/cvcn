@@ -1,5 +1,5 @@
 #include "Model.h"
-#include "View.h"
+#include "AccountDialog.h"
 #include "Controller.h"
 #include <QApplication>
 
@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     Model model;
-    View view;
+    AccountDialog view;
     Controller controller(model, view);
 
     view.show();

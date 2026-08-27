@@ -17,9 +17,9 @@ find_package(spdlog REQUIRED)
 
 set(PROJECT_SOURCES
     main.cpp
-    View.cpp
-    View.h
-    View.ui
+    AccountDialog.cpp
+    AccountDialog.h
+    AccountDialog.ui
     Model.cpp
     Model.h
     Controller.cpp
