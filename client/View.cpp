@@ -1,6 +1,5 @@
 #include "View.h"
-#include "./ui_View.h"
-
+#include "ui_View.h"
 View::View(QWidget *parent): QMainWindow(parent), ui(new Ui::View)
 {
     ui->setupUi(this);
@@ -12,7 +11,7 @@ View::~View()
     delete ui;
 }
 
-void View::onClickButton()
+void View::slotClickButton()
 {
     emit signalClickedButton(ui->usernameLineEdit->text(), ui->passwordLineEdit->text());
 }

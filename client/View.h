@@ -19,9 +19,10 @@ public:
     ~View();
 private:
     Ui::View *ui;
-    void  onClickButton();
+private slots:
+    void  slotClickButton();
 signals:
-       void signalClickedButton(QString& username, QString& password );
+       void signalClickedButton(const QString& username, const QString& password );
 
 };
 #endif // VIEW_H
