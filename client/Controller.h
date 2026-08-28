@@ -14,7 +14,9 @@ private:
     AccountDialog& view_;
 
 private slots:
-    void slotOnConnectRequested(const QString& username, const QString& password);
+    void slotAuthRequested(const QString& username, const QString& password);
+    void slotRegRequested(const QString& username, const QString& password);
+    void slotDelRequested(const QString& username, const QString& password);
 };
 
 #endif // CONTROLLER_H

@@ -19,10 +19,16 @@ public:
     ~AccountDialog();
 private:
     Ui::AccountDialog *ui;
+    QString username_;
+    QString password_;
 private slots:
-    void  slotClickButton();
-signals:
-       void signalClickedButton(const QString& username, const QString& password );
+    void  slotClickedAuthButton();
+    void  slotClickedRegButton();
+    void  slotClickedDelButton();
 
+signals:
+    void signalAuthRequested(const QString& username, const QString& password);
+    void signalRegRequested(const QString& username, const QString& password);
+    void signalDelRequested(const QString& username, const QString& password);
 };
 #endif // ACCOUNTDIALOG_H

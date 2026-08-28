@@ -1,4 +1,5 @@
 #include "Model.h"
+#include "Packets.h"
 #include <QDebug>
 
 Model::Model(QObject* parent): QObject(parent), socket_(nullptr)
@@ -19,4 +20,9 @@ void Model::slotConnected()
 void Model::slotSocketError(QAbstractSocket::SocketError error)
 {
     qDebug() << "Socket error:" << socket_->errorString() << "(code " << error << " )";
+}
+
+void Model::sendAuthRequest(const QString& username, const QString& password)
+{
+
 }

@@ -12,6 +12,7 @@ public:
    explicit Model(QObject* parent = nullptr);
     ~Model() = default;
     void connectToServer(const QString& address, const quint16 port);
+    void sendAuthRequest(const QString& username, const QString& password);
 private:
     QTcpSocket* socket_;
 

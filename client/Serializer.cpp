@@ -1,8 +1,3 @@
-/**
- * @file Serializer.cpp
- * @brief Реализация сериализации/десериализации бинарного протокола.
- */
-
 #include "Serializer.h"
 #include <cstring>
 #include <arpa/inet.h>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>View</class>
- <widget class="QMainWindow" name="View">
+ <class>AccountDialog</class>
+ <widget class="QMainWindow" name="AccountDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -43,7 +43,11 @@
            <widget class="QLineEdit" name="usernameLineEdit"/>
           </item>
           <item>
-           <widget class="QLineEdit" name="passwordLineEdit"/>
+           <widget class="QLineEdit" name="passwordLineEdit">
+            <property name="echoMode">
+             <enum>QLineEdit::Password</enum>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
