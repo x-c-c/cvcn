@@ -28,7 +28,8 @@ set(PROJECT_SOURCES
     Packets.h
 )
 
-add_executable(client ${PROJECT_SOURCES})
+add_executable(client ${PROJECT_SOURCES}
+    PacketBuilder.h PacketBuilder.cpp)
 target_link_libraries(client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
