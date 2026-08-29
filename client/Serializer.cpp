@@ -136,29 +136,14 @@ std::vector<uint8_t> Serializer::buildPacket(PacketType type, uint32_t messageID
 	return result;
 }
 
-/***************************************************/
-/* === Конкретные пакеты === */
-/***************************************************/
-
-/**
- * @brief Создаёт пакет ConnectRequest (без тела).
- */
 std::vector<uint8_t> Serializer::buildConnectRequestPacket(uint32_t messageID, uint32_t sessionID)
 {
 	return buildPacket(PacketType::ConnectRequest, messageID, sessionID);
 }
-
-/**
- * @brief Создаёт пакет ConnectResponse (без тела).
- */
 std::vector<uint8_t> Serializer::buildConnectResponsePacket(uint32_t messageID, uint32_t sessionID)
 {
 	return buildPacket(PacketType::ConnectResponse, messageID, sessionID);
 }
-
-/**
- * @brief Создаёт пакет RegisterRequest с учётными данными.
- */
 std::vector<uint8_t> Serializer::buildRegisterRequestPacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestPacket& packet)
 {
 	std::vector<uint8_t> body;
@@ -166,20 +151,12 @@ std::vector<uint8_t> Serializer::buildRegisterRequestPacket(uint32_t messageID, 
 	writeString(body, packet.password);
 	return buildPacket(PacketType::RegisterRequest, messageID, sessionID, body);
 }
-
-/**
- * @brief Создаёт пакет RegisterResponse с результатом.
- */
 std::vector<uint8_t> Serializer::buildRegisterResponsePacket(uint32_t messageID, uint32_t sessionID, const RegisterResponsePacket& packet)
 {
 	std::vector<uint8_t> body;
 	body.push_back(packet.success);
 	return buildPacket(PacketType::RegisterResponse, messageID, sessionID, body);
 }
-
-/**
- * @brief Создаёт пакет AuthRequest с учётными данными.
- */
 std::vector<uint8_t> Serializer::buildAuthRequestPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestPacket& packet)
 {
 	std::vector<uint8_t> body;
@@ -187,20 +164,12 @@ std::vector<uint8_t> Serializer::buildAuthRequestPacket(uint32_t messageID, uint
 	writeString(body, packet.password);
 	return buildPacket(PacketType::AuthRequest, messageID, sessionID, body);
 }
-
-/**
- * @brief Создаёт пакет AuthResponse с результатом.
- */
 std::vector<uint8_t> Serializer::buildAuthResponsePacket(uint32_t messageID, uint32_t sessionID, const AuthResponsePacket& packet)
 {
 	std::vector<uint8_t> body;
 	body.push_back(packet.success);
 	return buildPacket(PacketType::AuthResponse, messageID, sessionID, body);
 }
-
-/**
- * @brief Создаёт пакет MessageSend.
- */
 std::vector<uint8_t> Serializer::buildMessageSendPacket(uint32_t messageID, uint32_t sessionID, const MessageSendPacket& packet)
 {
 	std::vector<uint8_t> body;
@@ -209,10 +178,6 @@ std::vector<uint8_t> Serializer::buildMessageSendPacket(uint32_t messageID, uint
 	writeString(body, packet.text);
 	return buildPacket(PacketType::MessageSend, messageID, sessionID, body);
 }
-
-/**
- * @brief Создаёт пакет DisconnectRequest (без тела).
- */
 std::vector<uint8_t> Serializer::buildDisconnectRequestPacket(uint32_t messageID, uint32_t sessionID)
 {
 	return buildPacket(PacketType::DisconnectRequest, messageID, sessionID);
