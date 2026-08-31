@@ -23,13 +23,19 @@ set(PROJECT_SOURCES
     Controller.h
     Logger.cpp
     Logger.h
-    Serializer.cpp
-    Serializer.h
+    ByteWriter.cpp
+    ByteWriter.h
+    ByteReader.cpp
+    ByteReader.h
+    PacketBuilder.cpp
+    PacketBuilder.h
+    PacketParser.cpp
+    PacketParser.h
     Packets.h
+
 )
 
-add_executable(client ${PROJECT_SOURCES}
-    PacketBuilder.h PacketBuilder.cpp)
+add_executable(client ${PROJECT_SOURCES} )
 target_link_libraries(client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
