@@ -4,7 +4,7 @@ PacketBuilder::PacketBuilder() {}
 std::vector<uint8_t> PacketBuilder::buildPacket(PacketType type, uint32_t messageID, uint32_t sessionID, const std::vector<uint8_t>& body)
 {
     PacketHeaderRaw header;
-    header.type      = htons(static_cast<uint16_t>(type));
+    header.type = htons(static_cast<uint16_t>(type));
     header.messageID = htonl(messageID);
     header.sessionID = htonl(sessionID);
     header.messageLen = htons(static_cast<uint16_t>(body.size()));
