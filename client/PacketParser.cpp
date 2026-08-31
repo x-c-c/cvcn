@@ -77,8 +77,8 @@ bool PacketParser::parseMessageSendPacket(const std::vector<uint8_t>& body, Mess
 {
 	const uint8_t* cursor = body.data();
 	size_t remaining = body.size();
-	packet.senderID = readUint32(cursor, remaining);
-	packet.chatID   = readUint32(cursor, remaining);
+    packet.senderID =  ByteReader::readUint32(cursor, remaining);
+    packet.chatID   =  ByteReader::readUint32(cursor, remaining);
     packet.text     = ByteReader::readString(cursor, remaining);
 	return remaining == 0;
 }

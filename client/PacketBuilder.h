@@ -9,7 +9,6 @@ private:
     static std::vector<uint8_t> buildPacket(PacketType type, uint32_t messageID, uint32_t sessionID, const std::vector<uint8_t>& body = {});
 
 public:
-    PacketBuilder();
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectRequestPacket&);
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectResponsePacket&);
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestPacket&);

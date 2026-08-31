@@ -6,8 +6,6 @@
 class PacketParser
 {
 public:
-    PacketParser();
-
     static bool deserializeHeader(const std::vector<uint8_t>& rawData, PacketHeaderRaw& header);
 
     static bool parseConnectRequestPacket(const std::vector<uint8_t>& body, ConnectRequestPacket& packet);
