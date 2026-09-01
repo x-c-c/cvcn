@@ -31,7 +31,7 @@ set(PROJECT_SOURCES
     PacketBuilder.h
     PacketParser.cpp
     PacketParser.h
-    Packets.h
+    PacketData.h
 
 )
 

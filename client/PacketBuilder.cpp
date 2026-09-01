@@ -17,56 +17,56 @@ std::vector<uint8_t> PacketBuilder::buildPacket(PacketType type, uint32_t messag
     return result;
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectRequestPacket&)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectRequestData&)
 {
     return buildPacket(PacketType::ConnectRequest, messageID, sessionID);
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectResponsePacket&)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectResponseData&)
 {
     return buildPacket(PacketType::ConnectResponse, messageID, sessionID);
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestPacket& packet)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestData& data)
 {
     std::vector<uint8_t> body;
-    ByteWriter::writeString(body, packet.username);
-    ByteWriter::writeString(body, packet.password);
+    ByteWriter::writeString(body, data.username);
+    ByteWriter::writeString(body, data.password);
     return buildPacket(PacketType::RegisterRequest, messageID, sessionID, body);
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterResponsePacket& packet)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterResponseData& data)
 {
     std::vector<uint8_t> body;
-    body.push_back(packet.success);
+    body.push_back(data.success);
     return buildPacket(PacketType::RegisterResponse, messageID, sessionID, body);
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestPacket& packet)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestData& data)
 {
     std::vector<uint8_t> body;
-    ByteWriter::writeString(body, packet.username);
-    ByteWriter::writeString(body, packet.password);
+    ByteWriter::writeString(body, data.username);
+    ByteWriter::writeString(body, data.password);
     return buildPacket(PacketType::AuthRequest, messageID, sessionID, body);
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const AuthResponsePacket& packet)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const AuthResponseData& data)
 {
     std::vector<uint8_t> body;
-    body.push_back(packet.success);
+    body.push_back(data.success);
     return buildPacket(PacketType::AuthResponse, messageID, sessionID, body);
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const MessageSendPacket& packet)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const MessageSendData& data)
 {
     std::vector<uint8_t> body;
-    ByteWriter::writeUint32BE(body, packet.senderID);
-    ByteWriter::writeUint32BE(body, packet.chatID);
-    ByteWriter::writeString(body, packet.text);
+    ByteWriter::writeUint32BE(body, data.senderID);
+    ByteWriter::writeUint32BE(body, data.chatID);
+    ByteWriter::writeString(body, data.text);
     return buildPacket(PacketType::MessageSend, messageID, sessionID, body);
 }
 
-std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const DisconnectRequestPacket&)
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const DisconnectRequestData&)
 {
     return buildPacket(PacketType::DisconnectRequest, messageID, sessionID);
 }

@@ -15,40 +15,39 @@ enum class PacketType : uint16_t
 };
 
 #pragma pack(push, 1)
-
 struct PacketHeaderRaw
 {
-	uint16_t type;          ///< Тип пакета (PacketType).
-	uint32_t messageID;     ///< Уникальный идентификатор сообщения.
-	uint32_t sessionID;     ///< Идентификатор сессии.
-	uint16_t messageLen;    ///< Длина тела пакета в байтах (после заголовка).
+    uint16_t type;          ///< Тип пакета (DataType).
+    uint32_t messageID;     ///< Уникальный идентификатор сообщения.
+    uint32_t sessionID;     ///< Идентификатор сессии.
+    uint16_t messageLen;    ///< Длина тела пакета в байтах (после заголовка).
 };
 #pragma pack(pop)
 
-struct ConnectRequestPacket {};
-struct ConnectResponsePacket {};
-struct RegisterRequestPacket
+struct ConnectRequestData {};
+struct ConnectResponseData {};
+struct RegisterRequestData
 {
 	std::string username;   ///< Имя пользователя.
 	std::string password;   ///< Пароль (в будущем – хэш).
 };
-struct RegisterResponsePacket
+struct RegisterResponseData
 {
 	uint8_t success;        ///< 1 – успех, 0 – ошибка.
 };
-struct AuthRequestPacket
+struct AuthRequestData
 {
 	std::string username;   ///< Имя пользователя.
 	std::string password;   ///< Пароль (в будущем – хэш).
 };
-struct AuthResponsePacket
+struct AuthResponseData
 {
 	uint8_t success;        ///< 1 – успех, 0 – ошибка.
 };
-struct MessageSendPacket
+struct MessageSendData
 {
 	uint32_t senderID;      ///< Идентификатор отправителя.
 	uint32_t chatID;        ///< Идентификатор чата/получателя.
 	std::string text;       ///< Текст сообщения.
 };
-struct DisconnectRequestPacket {};
+struct DisconnectRequestData {};

@@ -2,21 +2,21 @@
 #define PACKETBUILDER_H
 #include <vector>
 #include <cstdint>
-#include "Packets.h"
+#include "PacketData.h"
 class PacketBuilder
 {
 private:
     static std::vector<uint8_t> buildPacket(PacketType type, uint32_t messageID, uint32_t sessionID, const std::vector<uint8_t>& body = {});
 
 public:
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectRequestPacket&);
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectResponsePacket&);
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestPacket&);
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const AuthResponsePacket&);
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestPacket&);
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterResponsePacket&);
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const MessageSendPacket&);
-    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const DisconnectRequestPacket&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectRequestData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ConnectResponseData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const AuthRequestData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const AuthResponseData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterResponseData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const MessageSendData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const DisconnectRequestData&);
 
 
     /*
