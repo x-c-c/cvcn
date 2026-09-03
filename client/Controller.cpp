@@ -8,7 +8,7 @@ Controller::Controller(Model& model, AccountDialog& view): QObject(nullptr), mod
     connect(&view_, &AccountDialog::signalDelRequested, this, &Controller::);
 }
 
-void Controller::slotAuthRequested(const QString& username, const QString& password)
+void Controller::slotRegRequested(const QString& username, const QString& password)
 {
-    model_.sendAuthRequest(username, password);
+    model_.sendRegRequest(username, password);
 }

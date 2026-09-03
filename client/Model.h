@@ -18,9 +18,13 @@ public:
     void sendPacket(const std::vector<uint8_t>& packet);
 private:
     QTcpSocket* socket_;
-
+    uint32_t messageID_ = 0;
+    uint32_t sessionID_ = 0;
+    vector<uint8_t> receiveBuffer_ = {};
+    void increaseMessageID();
 private slots:
     void slotConnected();
+    void slotReadyRead();
     void slotSocketError(QAbstractSocket::SocketError error);
 };
 #endif // MODEL_H

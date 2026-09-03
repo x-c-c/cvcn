@@ -29,8 +29,8 @@ set(PROJECT_SOURCES
     ByteReader.h
     PacketBuilder.cpp
     PacketBuilder.h
-    PacketParser.cpp
-    PacketParser.h
+    PacketDeserializer.cpp
+    PacketDeserializer.h
     PacketData.h
 
 )
