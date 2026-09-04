@@ -4,6 +4,17 @@
 
 namespace ByteReader
 {
+    uint8_t readUint8(const uint8_t*& cursor, size_t& remaining)
+    {
+        if (remaining < sizeof(uint8_t))
+            return 0;
+        uint8_t value = 0;
+        std::memcpy(&value, cursor, sizeof(value));
+        cursor += sizeof(uint8_t);
+        remaining -= sizeof(uint8_t);
+        return value;
+    }
+
 	uint16_t readUint16BE(const uint8_t*& cursor, size_t& remaining)
     {
         if (remaining < sizeof(uint16_t))

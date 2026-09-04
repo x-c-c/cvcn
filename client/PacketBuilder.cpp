@@ -38,7 +38,7 @@ std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t ses
 std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const RegisterResponseData& data)
 {
     std::vector<uint8_t> body;
-    body.push_back(data.success);
+    ByteWriter::writeUint8(body, data.success);
     return buildPacket(PacketType::RegisterResponse, messageID, sessionID, body);
 }
 
@@ -53,7 +53,7 @@ std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t ses
 std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const AuthResponseData& data)
 {
     std::vector<uint8_t> body;
-    body.push_back(data.success);
+    ByteWriter::writeUint8(body, data.success);
     return buildPacket(PacketType::AuthResponse, messageID, sessionID, body);
 }
 

@@ -30,7 +30,7 @@ void Model::slotReadyRead()
     while (receiveBuffer_.size() >sizeof(PacketHeaderRaw))
     {
         PacketHeaderRaw header;
-        PacketParser::deserializeHeader(receiveBuffer_, header);
+        PacketDeserializer::deserializeHeader(receiveBuffer_, header);
         if  (receiveBuffer_.size() >=  header.messageLen)
         {
 
