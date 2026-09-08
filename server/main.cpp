@@ -4,7 +4,7 @@
 #include "ServerStartStop.h"
 #include "SigintHandler.h"
 #include "Database.h"
-
+#include "Epoller.h"
 int main()
 {
 	SigintHandler::setup();
@@ -19,7 +19,12 @@ int main()
 	}
 	config.setPort(chosenPort);
 	ServerStartStop server;
-	server.start(config, &db);
+	server.start(config);
+	
+	Epoller epoller(&db);
+	epoller.startEpollLoop(server.getServerSocketFD());
+	
+	
 	Logger::instance().info("Server shutdown");
 	return 0;
 }
