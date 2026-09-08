@@ -12,7 +12,7 @@ public:
 	explicit Epoller(Database* db);
 	~Epoller();
 
-	void startEpollLoop(int serverSocketDescriptor);
+	void startEpollLoop(int serverSocketFD);
 	void stopEpollLoop();
 	void modifyFdEvents(int fileDescriptor, uint32_t events);
 	void closeClient(int fileDescriptor);
@@ -21,12 +21,12 @@ public:
 private:
 	static constexpr int MAX_EVENTS = 1024;
 	static constexpr int WAIT_MILLISECONDS = 1000;
-	int epollFileDescriptor_;
+	int epollFD_;
 	std::atomic<bool> running_{true};
 	std::unordered_map<int, ClientSession*> sessions_;
 	Database* db_;
 
 	void addFdToEpoll(int fileDescriptor, uint32_t events);
 	void removeFdFromEpoll(int fileDescriptor);
-	void handleNewConnection(int serverSocketDescriptor);
+	void handleNewConnection(int serverSocketFD);
 };
