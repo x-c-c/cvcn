@@ -21,6 +21,7 @@ public:
     bool isClosed() const { return closed_; }
 
 private:
+	int TEMP_BUFFER_SIZE = 4096;
     int socketDescriptor_;
     bool closed_ = false;
     Epoller* epoller_;

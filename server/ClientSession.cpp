@@ -18,7 +18,7 @@ ClientSession::~ClientSession()
 
 void ClientSession::handleRead()
 {
-    uint8_t tempBuffer[4096];
+    uint8_t tempBuffer[TEMP_BUFFER_SIZE];
     ssize_t bytesRead = recv(socketDescriptor_, tempBuffer, sizeof(tempBuffer), 0);
     if (bytesRead > 0)
     {

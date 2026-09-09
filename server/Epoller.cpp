@@ -11,19 +11,12 @@ Epoller::Epoller(Database* db): epollFD_(epoll_create1(0)), running_(true), db_(
 
 Epoller::~Epoller()
 {
-	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
-	{
-		if (!it->second->isClosed())
-			it->second->closeSession();
-		delete it->second;
-	}
-	sessions_.clear();
-	close(epollFD_);
+	stopEpollLoop();
 }
 
 void Epoller::addFdToEpoll(int fileDescriptor, uint32_t events)
 {
-	epoll_event event;
+	epoll_event event;				// странно звучит - eventpoll_event event
 	event.data.fd = fileDescriptor;
 	event.events = events;
 	if (epoll_ctl(epollFD_, EPOLL_CTL_ADD, fileDescriptor, &event) == -1)
@@ -83,7 +76,9 @@ void Epoller::closeClient(int fileDescriptor)
 	if (it != sessions_.end())
 	{
 		if (!it->second->isClosed())
+		{
 			it->second->closeSession();
+		}
 		delete it->second;
 		sessions_.erase(it);
 	}
@@ -137,12 +132,16 @@ void Epoller::startEpollLoop(int serverSocketFD)
 			if (events & EPOLLIN)
 			{
 				if (socketFD == serverSocketFD)
+				{
 					handleNewConnection(socketFD);
+				}
 				else
 				{
 					auto it = sessions_.find(socketFD);
 					if (it != sessions_.end())
+					{
 						it->second->handleRead();
+					}
 				}
 			}
 
@@ -150,7 +149,9 @@ void Epoller::startEpollLoop(int serverSocketFD)
 			{
 				auto it = sessions_.find(socketFD);
 				if (it != sessions_.end())
+				{
 					it->second->handleWrite();
+				}
 			}
 		}
 	}
@@ -158,5 +159,15 @@ void Epoller::startEpollLoop(int serverSocketFD)
 
 void Epoller::stopEpollLoop()
 {
+		for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
+	{
+		if (!it->second->isClosed())
+		{
+			it->second->closeSession();
+		}
+		delete it->second;
+	}
+	sessions_.clear();
+	close(epollFD_);
 	running_ = false;
 }
