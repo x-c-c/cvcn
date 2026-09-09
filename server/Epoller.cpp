@@ -1,22 +1,40 @@
 #include "Epoller.h"
-#include "ClientSession.h"
-#include "Database.h"
 #include "Logger.h"
 #include "SigintHandler.h"
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 
-Epoller::Epoller(Database* db): epollFD_(epoll_create1(0)), running_(true), db_(db){}
+Epoller::Epoller():
+	epollFD_(epoll_create1(0)), running_(true)){}
 
 Epoller::~Epoller()
 {
 	stopEpollLoop();
 }
 
+
+void Epoller::setNewConnectionCallback(newConnectionCallback cb)
+{
+	onNewConnection_ = std::move(cb);
+}
+void Epoller::setReadEventCallback(ReadEventCallback cb)
+{
+	onRead_ = std::move(cb);
+}
+void Epoller::setWriteEventCallback(WriteEventCallback cb)
+{
+	onWrite_ = std::move(cb);
+}
+void Epoller::setErrorEventCallback(ErrorEventCallback cb)
+{
+	onError_ = std::move(cb);
+}
+
+
 void Epoller::addFdToEpoll(int fileDescriptor, uint32_t events)
 {
-	epoll_event event;				// странно звучит - eventpoll_event event
+	epoll_event event{};				// странно звучит - eventpoll_event event
 	event.data.fd = fileDescriptor;
 	event.events = events;
 	if (epoll_ctl(epollFD_, EPOLL_CTL_ADD, fileDescriptor, &event) == -1)
@@ -32,7 +50,7 @@ void Epoller::removeFdFromEpoll(int fileDescriptor)
 
 void Epoller::modifyFdEvents(int fileDescriptor, uint32_t events)
 {
-	epoll_event event;
+	epoll_event event{};
 	event.data.fd = fileDescriptor;
 	event.events = events;
 	if (epoll_ctl(epollFD_, EPOLL_CTL_MOD, fileDescriptor, &event) == -1)
@@ -96,7 +114,8 @@ void Epoller::startEpollLoop(int serverSocketFD)
 		fcntl(serverSocketFD, F_SETFL, flags | O_NONBLOCK);
 	}
 	addFdToEpoll(serverSocketFD, EPOLLIN);
-
+	running_ = true;
+	
 	epoll_event readyEvents[MAX_EVENTS];
 	while (running_.load() && !SigintHandler::isStopRequested())
 	{
@@ -159,15 +178,17 @@ void Epoller::startEpollLoop(int serverSocketFD)
 
 void Epoller::stopEpollLoop()
 {
-		for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
+	running_ = false;
+	for (auto& pair : sessions_)
 	{
-		if (!it->second->isClosed())
+		if (!pair.second->isClosed())
 		{
-			it->second->closeSession();
+			pair.second->closeSession();
 		}
-		delete it->second;
+		delete pair.second;
 	}
 	sessions_.clear();
 	close(epollFD_);
-	running_ = false;
+	epollFD_ = -1;
+	
 }
