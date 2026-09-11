@@ -27,6 +27,8 @@ public:
 	void closeClient(int fileDescriptor);
 
 private:
+	// возможно стоит поменять имя
+	// сейчас это объект типа std::function<void(...)>; который хранит коллбэк на какую-либо функцию
 	newConnectionCallback onNewConnection_;
 	readEventCallback onRead_;
 	writeEventCallback onWrite_;

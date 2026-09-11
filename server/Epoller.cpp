@@ -4,9 +4,9 @@
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <sys/socket.h>
 Epoller::Epoller():
-	epollFD_(epoll_create1(0)), running_(true)){}
+	epollFD_(epoll_create1(0)), running_(false){}
 
 Epoller::~Epoller()
 {
@@ -18,15 +18,15 @@ void Epoller::setNewConnectionCallback(newConnectionCallback cb)
 {
 	onNewConnection_ = std::move(cb);
 }
-void Epoller::setReadEventCallback(ReadEventCallback cb)
+void Epoller::setReadEventCallback(readEventCallback cb)
 {
 	onRead_ = std::move(cb);
 }
-void Epoller::setWriteEventCallback(WriteEventCallback cb)
+void Epoller::setWriteEventCallback(writeEventCallback cb)
 {
 	onWrite_ = std::move(cb);
 }
-void Epoller::setErrorEventCallback(ErrorEventCallback cb)
+void Epoller::setErrorEventCallback(errorEventCallback cb)
 {
 	onError_ = std::move(cb);
 }
@@ -58,7 +58,7 @@ void Epoller::modifyFdEvents(int fileDescriptor, uint32_t events)
 		Logger::instance().error("epoll_ctl MOD failed for fd {}: {}", fileDescriptor, strerror(errno));
 	}
 }
-
+/*
 void Epoller::handleNewConnection(int serverSocketFD)
 {
 	int clientSocketFD = accept(serverSocketFD, nullptr, nullptr);
@@ -105,7 +105,7 @@ void Epoller::closeClient(int fileDescriptor)
 		close(fileDescriptor);
 	}
 }
-
+*/
 void Epoller::startEpollLoop(int serverSocketFD)
 {
 	int flags = fcntl(serverSocketFD, F_GETFL, 0);
@@ -115,7 +115,7 @@ void Epoller::startEpollLoop(int serverSocketFD)
 	}
 	addFdToEpoll(serverSocketFD, EPOLLIN);
 	running_ = true;
-	
+
 	epoll_event readyEvents[MAX_EVENTS];
 	while (running_.load() && !SigintHandler::isStopRequested())
 	{
@@ -127,7 +127,7 @@ void Epoller::startEpollLoop(int serverSocketFD)
 			Logger::instance().critical("epoll_wait failed: {}", strerror(errno));
 			break;
 		}
-		
+
 		for (int i = 0; i < eventCount; ++i)
 		{
 			int socketFD = readyEvents[i].data.fd;
@@ -141,10 +141,8 @@ void Epoller::startEpollLoop(int serverSocketFD)
 					running_ = false;
 					break;
 				}
-				else
-				{
-					closeClient(socketFD);
-				}
+				if (onError_)
+					onError_(socketFD, events);
 				continue;
 			}
 
@@ -152,25 +150,36 @@ void Epoller::startEpollLoop(int serverSocketFD)
 			{
 				if (socketFD == serverSocketFD)
 				{
-					handleNewConnection(socketFD);
-				}
-				else
-				{
-					auto it = sessions_.find(socketFD);
-					if (it != sessions_.end())
+					int clientSocketFD = accept(serverSocketFD, nullptr, nullptr);
+					if (clientSocketFD < 0)
 					{
-						it->second->handleRead();
+						if (errno != EAGAIN && errno != EWOULDBLOCK)
+							Logger::instance().error("accept() failed: {}", strerror(errno));
+					}
+					else
+					{
+						int cflags = fcntl(clientSocketFD, F_GETFL, 0);
+						if (cflags == -1 || fcntl(clientSocketFD, F_SETFL, cflags | O_NONBLOCK) == -1)
+						{
+							Logger::instance().error("fcntl O_NONBLOCK on client fd {} failed: {}", clientSocketFD, strerror(errno));
+							close(clientSocketFD);
+						}
+						else
+						{
+							addFdToEpoll(clientSocketFD, EPOLLIN | EPOLLET);
+							if (onNewConnection_)
+								onNewConnection_(clientSocketFD);
+						}
 					}
 				}
+				else if (onRead_)
+					onRead_(socketFD);
 			}
 
 			if (events & EPOLLOUT)
 			{
-				auto it = sessions_.find(socketFD);
-				if (it != sessions_.end())
-				{
-					it->second->handleWrite();
-				}
+				if (onWrite_)
+					onWrite_(socketFD);
 			}
 		}
 	}
@@ -178,6 +187,7 @@ void Epoller::startEpollLoop(int serverSocketFD)
 
 void Epoller::stopEpollLoop()
 {
+	/*
 	running_ = false;
 	for (auto& pair : sessions_)
 	{
@@ -190,5 +200,11 @@ void Epoller::stopEpollLoop()
 	sessions_.clear();
 	close(epollFD_);
 	epollFD_ = -1;
-	
+	*/
+	running_ = false;
+	if (epollFD_ != -1)
+	{
+		close(epollFD_);
+		epollFD_ = -1;
+	}
 }
