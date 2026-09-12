@@ -63,6 +63,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, AuthR
     data.success = ByteReader::readUint8(cursor, remaining);
     return remaining == 0;
 }
+
 bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, MessageSendData& data)
 {
     const uint8_t* cursor = body.data();
@@ -78,4 +79,21 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Disco
     (void)body;
     (void)data;
     return true;
+}
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, DeleteRequestData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    data.username = ByteReader::readString(cursor, remaining);
+    data.password = ByteReader::readString(cursor, remaining);
+    return remaining == 0;
+}
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, DeleteResponseData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    data.success = ByteReader::readUint8(cursor, remaining);
+    return remaining == 0;
 }

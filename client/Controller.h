@@ -23,6 +23,7 @@ private slots:
 
     void onRegistrationFinished(bool success);
     void onAuthFinished(bool success, uint32_t sessionID);
+    void onDeleteFinished(bool success);
     void onError(const QString& errorString);
 };
 

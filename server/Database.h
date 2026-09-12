@@ -15,10 +15,8 @@ public:
 	// Пользователи
 	bool isUserExist(const std::string& username);
 	bool addUser(const std::string& username, const std::string& passwordHash);
-	
+	bool deleteUser(const std::string& username, const std::string& passwordHash);
+
 	std::string getUserPasswordHash(const std::string& username);
 	int getUserID(const std::string& username);
-	
-	// Чаты
-	//int createChat(bool isGroup, const std::string& name);
 };

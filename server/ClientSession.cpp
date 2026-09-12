@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cerrno>
 #include <unistd.h>
+#include "Validator.h"
 
 ClientSession::ClientSession(int fileDescriptor, Epoller* epoller, Database* db):
 	fileDescriptor_(fileDescriptor), epoller_(epoller), db_(db), sender_(epoller, fileDescriptor){}
@@ -51,6 +52,12 @@ void ClientSession::handleWrite()
 
 void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
 {
+	if (!validateIncomingPacket(header, body))
+	{
+		Logger::instance().warn("Packet 0x{:X} rejected from fd {}: validation failed", header.type, fileDescriptor_);
+		return;
+	}
+		
 	switch (static_cast<PacketType>(header.type))
 	{
 	case PacketType::ConnectRequest:
@@ -61,6 +68,8 @@ void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vect
 		RegisterRequestData data;
 		if (PacketDeserializer::deserializeData(body, data))
 			handleRegisterRequestData(header.messageID, header.sessionID, data);
+		else
+			Logger::instance().warn("Failed to parse RegisterRequest from fd {}", fileDescriptor_);
 		break;
 	}
 	case PacketType::AuthRequest:
@@ -68,6 +77,8 @@ void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vect
 		AuthRequestData data;
 		if (PacketDeserializer::deserializeData(body, data))
 			handleAuthRequestData(header.messageID, header.sessionID, data);
+		else
+			Logger::instance().warn("Failed to parse AuthRequest from fd {}", fileDescriptor_);
 		break;
 	}
 	case PacketType::MessageSend:
@@ -75,11 +86,22 @@ void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vect
 		MessageSendData data;
 		if (PacketDeserializer::deserializeData(body, data))
 			handleMessageSendData(header.messageID, header.sessionID, data);
+		else
+			Logger::instance().warn("Failed to parse MessageSend from fd {}", fileDescriptor_);
 		break;
 	}
 	case PacketType::DisconnectRequest:
 		handleDisconnectRequestData();
 		break;
+	case PacketType::DeleteRequest:
+	{
+		DeleteRequestData data;
+		if (PacketDeserializer::deserializeData(body, data))
+			handleDeleteRequestData(header.messageID, header.sessionID, data);
+		else
+			Logger::instance().warn("Failed to parse DeleteRequest from fd {}", fileDescriptor_);
+		break;
+	}
 	default:
 		Logger::instance().warn("Unknown packet type 0x{:X} from client {}", header.type, fileDescriptor_);
 		break;
@@ -92,19 +114,29 @@ void ClientSession::handleConnectRequestData(uint32_t messageID, uint32_t sessio
 	ConnectResponseData resp;
 	auto response = PacketBuilder::buildPacket(messageID, newSessionID, resp);
 	sender_.sendResponse(response);
+	Logger::instance().info("ConnectResponse sent to fd {} (sessionID={})", fileDescriptor_, newSessionID);
 }
 
-void ClientSession::handleRegisterRequestData(uint32_t messageID, uint32_t sessionID, const RegisterRequestData& data)
+void ClientSession::handleRegisterRequestData(uint32_t messageID, uint32_t sessionID,
+	const RegisterRequestData& data)
 {
 	RegisterResponseData resp;
 	if (db_->isUserExist(data.username))
 	{
 		resp.success = 0;
+		Logger::instance().warn("Register failed for '{}' (fd {}): user already exists",
+			data.username, fileDescriptor_);
 	}
 	else
 	{
 		std::string hash = "hash_" + data.password;
 		resp.success = db_->addUser(data.username, hash) ? 1 : 0;
+		if (resp.success)
+			Logger::instance().info("Register OK for '{}' (fd {})",
+				data.username, fileDescriptor_);
+		else
+			Logger::instance().error("Register failed for '{}' (fd {}): DB error",
+				data.username, fileDescriptor_);
 	}
 	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
 	sender_.sendResponse(response);
@@ -117,13 +149,22 @@ void ClientSession::handleAuthRequestData(uint32_t messageID, uint32_t sessionID
 	std::string storedHash = db_->getUserPasswordHash(data.username);
 	resp.success = (!storedHash.empty() && storedHash == "hash_" + data.password) ? 1 : 0;
 
+	if (resp.success)
+		Logger::instance().info("Auth OK for '{}' (fd {})",
+			data.username, fileDescriptor_);
+	else
+		Logger::instance().warn("Auth failed for '{}' (fd {})",
+			data.username, fileDescriptor_);
+
 	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
 	sender_.sendResponse(response);
 }
 
-void ClientSession::handleMessageSendData(uint32_t messageID, uint32_t sessionID, const MessageSendData& data)
+void ClientSession::handleMessageSendData(uint32_t messageID, uint32_t sessionID,
+	const MessageSendData& data)
 {
-	Logger::instance().info("Message from {} to chat {}: {}", data.senderID, data.chatID, data.text);
+	Logger::instance().info("Message from sender={} to chat={} (fd {}): '{}'",
+		data.senderID, data.chatID, fileDescriptor_, data.text);
 	(void)messageID;
 	(void)sessionID;
 }
@@ -134,6 +175,24 @@ void ClientSession::handleDisconnectRequestData()
 	closeSession();
 }
 
+void ClientSession::handleDeleteRequestData(uint32_t messageID, uint32_t sessionID,
+	const DeleteRequestData& data)
+{
+	DeleteResponseData resp;
+	std::string hash = "hash_" + data.password;
+	resp.success = db_->deleteUser(data.username, hash) ? 1 : 0;
+
+	if (resp.success)
+		Logger::instance().info("Delete OK for '{}' (fd {})",
+			data.username, fileDescriptor_);
+	else
+		Logger::instance().warn("Delete failed for '{}' (fd {}): user not found or wrong password",
+			data.username, fileDescriptor_);
+
+	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
+	sender_.sendResponse(response);
+}
+
 void ClientSession::closeSession()
 {
 	if (closed_)
@@ -142,4 +201,44 @@ void ClientSession::closeSession()
 	close(fileDescriptor_);
 	closed_ = true;
 	Logger::instance().info("Session closed for fd {}", fileDescriptor_);
+}
+
+bool ClientSession::validateIncomingPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
+{
+	switch (static_cast<PacketType>(header.type))
+	{
+	case PacketType::RegisterRequest:
+	{
+		RegisterRequestData data;
+		if (!PacketDeserializer::deserializeData(body, data))
+			return false;
+		return Validator::validateUsername(data.username) && Validator::validatePassword(data.password);
+	}
+	case PacketType::AuthRequest:
+	{
+		AuthRequestData data;
+		if (!PacketDeserializer::deserializeData(body, data))
+			return false;
+		return Validator::validateUsername(data.username) && Validator::validatePassword(data.password);
+	}
+	case PacketType::DeleteRequest:
+	{
+		DeleteRequestData data;
+		if (!PacketDeserializer::deserializeData(body, data))
+			return false;
+		return Validator::validateUsername(data.username) && Validator::validatePassword(data.password);
+	}
+	case PacketType::MessageSend:
+	{
+		MessageSendData data;
+		if (!PacketDeserializer::deserializeData(body, data))
+			return false;
+		return Validator::validateSenderID(data.senderID)
+			&& Validator::validateChatID(data.chatID)
+			&& Validator::validateMessage(data.text);
+	}
+	default:
+		// Пустые пакеты: Connect, Disconnect, там валидировать нечего
+		return true;
+	}
 }

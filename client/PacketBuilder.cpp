@@ -70,3 +70,18 @@ std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t ses
 {
     return buildPacket(PacketType::DisconnectRequest, messageID, sessionID);
 }
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const DeleteRequestData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeString(body, data.username);
+    ByteWriter::writeString(body, data.password);
+    return buildPacket(PacketType::DeleteRequest, messageID, sessionID, body);
+}
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const DeleteResponseData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeUint8(body, data.success);
+    return buildPacket(PacketType::DeleteResponse, messageID, sessionID, body);
+}

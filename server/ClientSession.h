@@ -35,4 +35,7 @@ private:
 	void handleAuthRequestData(uint32_t messageID, uint32_t sessionID, const AuthRequestData& data);
 	void handleMessageSendData(uint32_t messageID, uint32_t sessionID, const MessageSendData& data);
 	void handleDisconnectRequestData();
+	void handleDeleteRequestData(uint32_t messageID, uint32_t sessionID, const DeleteRequestData& data);
+	
+	bool validateIncomingPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 };

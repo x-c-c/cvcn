@@ -47,8 +47,12 @@ bool Database::open(const std::string& dbPath)
 bool Database::addUser(const std::string& username, const std::string& passwordHash)
 {
 	const char* sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)";
-	sqlite3_stmt* stmt;
-	sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
+	sqlite3_stmt* stmt = nullptr;
+	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
+	{
+		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		return false;
+	}
 	sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 2, passwordHash.c_str(), -1, SQLITE_STATIC);
 
@@ -62,11 +66,37 @@ bool Database::addUser(const std::string& username, const std::string& passwordH
 	return true;
 }
 
+bool Database::deleteUser(const std::string& username, const std::string& passwordHash)
+{
+	const char* sql = "DELETE FROM users WHERE username = ? AND password_hash = ?";
+	sqlite3_stmt* stmt = nullptr;
+	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
+	{
+		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		return false;
+	}
+	sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 2, passwordHash.c_str(), -1, SQLITE_STATIC);
+
+	int returnCode = sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+	if (returnCode != SQLITE_DONE)
+	{
+		Logger::instance().error("Failed to delete user '{}': {}", username, sqlite3_errmsg(db_));
+		return false;
+	}
+	return sqlite3_changes(db_) > 0;
+}
+
 std::string Database::getUserPasswordHash(const std::string& username)
 {
 	const char* sql = "SELECT password_hash FROM users WHERE username = ?";
-	sqlite3_stmt* stmt;
-	sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
+	sqlite3_stmt* stmt = nullptr;
+	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
+	{
+		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		return "";
+	}
 	sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
 
 	std::string hash;
@@ -84,8 +114,12 @@ bool Database::isUserExist(const std::string& username)
 int Database::getUserID(const std::string& username)
 {
 	const char* sql = "SELECT id FROM users WHERE username = ?";
-	sqlite3_stmt* stmt;
-	sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
+	sqlite3_stmt* stmt = nullptr;
+	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
+	{
+		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		return -1;
+	}
 	sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
 
 	int userID = -1;
@@ -94,7 +128,3 @@ int Database::getUserID(const std::string& username)
 	sqlite3_finalize(stmt);
 	return userID;
 }
-
-
-
-

@@ -18,11 +18,14 @@ public:
     void connectToServer(const QString& address, quint16 port);
     void sendRegRequest(const QString& username, const QString& password);
     void sendAuthRequest(const QString& username, const QString& password);
+    void sendDeleteRequest(const QString& username, const QString& password);
+
 
 signals:
     void connected();
     void registrationFinished(bool success);
     void authFinished(bool success, uint32_t sessionID);
+    void deleteFinished(bool success);
     void errorOccurred(const QString& errorString);
 
 private slots:

@@ -78,6 +78,13 @@ void Model::processIncomingPacket(const PacketHeaderRaw& header, const std::vect
         }
         break;
     }
+    case PacketType::DeleteResponse:
+    {
+        DeleteResponseData resp{};
+        if (PacketDeserializer::deserializeData(body, resp))
+            emit deleteFinished(resp.success == 1);
+        break;
+    }
     default:
         qDebug() << "Unknown packet type:" << static_cast<int>(header.type);
         break;
@@ -118,7 +125,15 @@ void Model::sendAuthRequest(const QString& username, const QString& password)
     sendPacket(packet);
     increaseMessageID();
 }
-
+void Model::sendDeleteRequest(const QString& username, const QString& password)
+{
+    DeleteRequestData payload;
+    payload.username = username.toStdString();
+    payload.password = password.toStdString();
+    auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+}
 void Model::increaseMessageID()
 {
     ++messageID_;

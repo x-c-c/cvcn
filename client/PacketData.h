@@ -11,7 +11,9 @@ enum class PacketType : uint16_t
 	AuthRequest         = 0x5,  ///< Запрос аутентификации.
 	AuthResponse        = 0x6,  ///< Ответ на аутентификацию.
 	MessageSend         = 0x7,  ///< Отправка текстового сообщения.
-	DisconnectRequest   = 0x8   ///< Запрос отключения (без тела).
+    DisconnectRequest   = 0x8,   ///< Запрос отключения (без тела).
+       DeleteRequest       = 0x9,  ///< Запрос удаления аккаунта.
+       DeleteResponse      = 0xA   ///< Ответ на удаление аккаунта.
 };
 
 #pragma pack(push, 1)
@@ -51,3 +53,12 @@ struct MessageSendData
 	std::string text;       ///< Текст сообщения.
 };
 struct DisconnectRequestData {};
+struct DeleteRequestData
+{
+    std::string username;
+    std::string password;
+};
+struct DeleteResponseData
+{
+    uint8_t success;
+};
