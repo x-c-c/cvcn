@@ -10,7 +10,7 @@ public:
 	~Epoller();
 
 	
-	using newConnectionCallback = std::function<void(int clientSocketFD)>;
+	using newConnectionCallback = std::function<void(int fileDescriptor)>;
 	using readEventCallback = std::function<void(int fileDescriptor)>;
 	using writeEventCallback = std::function<void(int fileDescriptor)>;
 	using errorEventCallback = std::function<void(int fileDescriptor, uint32_t events)>;
@@ -24,7 +24,6 @@ public:
 	void startEpollLoop(int serverSocketFD);
 	void stopEpollLoop();
 	void modifyFdEvents(int fileDescriptor, uint32_t events);
-	//void closeClient(int fileDescriptor);
 	void addFdToEpoll(int fileDescriptor, uint32_t events);
 	void removeFdFromEpoll(int fileDescriptor);
 

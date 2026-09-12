@@ -12,5 +12,7 @@ int main(int argc, char *argv[])
     Controller controller(model, view);
 
     view.show();
+    controller.connectToServer("127.0.0.1", 55550);
+
     return app.exec();
 }

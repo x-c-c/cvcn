@@ -1,16 +1,19 @@
 #include "Model.h"
 #include "PacketData.h"
-#include <QDebug>
 #include "PacketBuilder.h"
 #include "PacketDeserializer.h"
+#include <QDebug>
+#include <cstring>
+
 Model::Model(QObject* parent): QObject(parent), socket_(nullptr)
 {
     socket_ = new QTcpSocket(this);
-    connect( socket_, &QTcpSocket::connected, this, &Model::slotConnected);
-    connect( socket_, &QTcpSocket::errorOccurred, this, &Model::slotSocketError);
-    connect( socket_, &QTcpSocket::readyRead, this, &Model::slotReadyRead);
+    connect(socket_, &QTcpSocket::connected,    this, &Model::slotConnected);
+    connect(socket_, &QTcpSocket::errorOccurred, this, &Model::slotSocketError);
+    connect(socket_, &QTcpSocket::readyRead,    this, &Model::slotReadyRead);
 }
-void Model::connectToServer(const QString& address, const quint16 port)
+
+void Model::connectToServer(const QString& address, quint16 port)
 {
     socket_->connectToHost(address, port);
 }
@@ -18,53 +21,100 @@ void Model::connectToServer(const QString& address, const quint16 port)
 void Model::slotConnected()
 {
     qDebug() << "connected";
+    emit connected();
 }
+
 void Model::slotSocketError(QAbstractSocket::SocketError error)
 {
-    qDebug() << "Socket error:" << socket_->errorString() << "(code " << error << " )";
+    qDebug() << "Socket error:" << socket_->errorString() << "(code" << error << ")";
+    emit errorOccurred(socket_->errorString());
 }
+
 void Model::slotReadyRead()
 {
     QByteArray chunk = socket_->readAll();
-    receiveBuffer_.append(chunk);
-    while (receiveBuffer_.size() >sizeof(PacketHeaderRaw))
+    receiveBuffer_.insert(receiveBuffer_.end(), chunk.begin(), chunk.end());
+
+    while (receiveBuffer_.size() >= sizeof(PacketHeaderRaw))
     {
         PacketHeaderRaw header;
-        PacketDeserializer::deserializeHeader(receiveBuffer_, header);
-        if  (receiveBuffer_.size() >=  header.messageLen)
-        {
+        if (!PacketDeserializer::deserializeHeader(receiveBuffer_, header))
+            break;
 
-        }
+        size_t totalSize = sizeof(PacketHeaderRaw) + header.messageLen;
+        if (receiveBuffer_.size() < totalSize)
+            break;
+
+        std::vector<uint8_t> body(
+            receiveBuffer_.begin() + sizeof(PacketHeaderRaw),
+            receiveBuffer_.begin() + totalSize);
+
+        receiveBuffer_.erase(receiveBuffer_.begin(), receiveBuffer_.begin() + totalSize);
+
+        processIncomingPacket(header, body);
     }
 }
 
-
+void Model::processIncomingPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
+{
+    switch (static_cast<PacketType>(header.type))
+    {
+    case PacketType::RegisterResponse:
+    {
+        RegisterResponseData resp{};
+        if (PacketDeserializer::deserializeData(body, resp))
+            emit registrationFinished(resp.success == 1);
+        break;
+    }
+    case PacketType::AuthResponse:
+    {
+        AuthResponseData resp{};
+        if (PacketDeserializer::deserializeData(body, resp))
+        {
+            bool success = (resp.success == 1);
+            if (success)
+                sessionID_ = header.sessionID;
+            emit authFinished(success, sessionID_);
+        }
+        break;
+    }
+    default:
+        qDebug() << "Unknown packet type:" << static_cast<int>(header.type);
+        break;
+    }
+}
 
 void Model::sendPacket(const std::vector<uint8_t>& packet)
 {
     if (socket_->state() != QAbstractSocket::ConnectedState)
     {
+        emit errorOccurred("Not connected to server");
         return;
     }
     QByteArray data = QByteArray::fromRawData(
         reinterpret_cast<const char*>(packet.data()),
-        static_cast<int>(packet.size())
-        );
-
-    qint64 bytesWritten  =  socket_->write(data);
+        static_cast<int>(packet.size()));
+    qint64 bytesWritten = socket_->write(data);
     if (bytesWritten == -1)
-    {
         emit errorOccurred(socket_->errorString());
-    }
 }
-
 
 void Model::sendRegRequest(const QString& username, const QString& password)
 {
     RegisterRequestData payload;
     payload.username = username.toStdString();
     payload.password = password.toStdString();
-    std::vector<uint8_t> packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+}
+
+void Model::sendAuthRequest(const QString& username, const QString& password)
+{
+    AuthRequestData payload;
+    payload.username = username.toStdString();
+    payload.password = password.toStdString();
+    auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
     sendPacket(packet);
     increaseMessageID();
 }
@@ -73,12 +123,3 @@ void Model::increaseMessageID()
 {
     ++messageID_;
 }
-
-
-
-
-
-
-
-
-

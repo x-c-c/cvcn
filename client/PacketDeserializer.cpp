@@ -60,8 +60,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, AuthR
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
-    data.username = ByteReader::readString(cursor, remaining);
-    data.password = ByteReader::readString(cursor, remaining);
+    data.success = ByteReader::readUint8(cursor, remaining);
     return remaining == 0;
 }
 bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, MessageSendData& data)
