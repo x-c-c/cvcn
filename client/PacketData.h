@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
-
+#include <vector>
 enum class PacketType : uint16_t
 {
     ConnectRequest      = 0x1,

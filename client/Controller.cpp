@@ -66,10 +66,10 @@ void Controller::slotDelRequested(const QString& username, const QString& passwo
     model_.sendDeleteRequest(username, password);
 }
 
-void Controller::slotMessageSendRequested(const QString& text)
+
+void Controller::slotMessageSendRequested(uint32_t chatID, const QString& text)
 {
-    // chatID = 0 — заглушка, пока нет списка чатов
-    model_.sendMessage(0, text);
+    model_.sendMessage(chatID, text);
 }
 
 void Controller::onRegistrationFinished(bool success)

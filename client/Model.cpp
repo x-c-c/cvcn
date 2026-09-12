@@ -171,3 +171,29 @@ void Model::sendMessage(uint32_t chatID, const QString& text)
     increaseMessageID();
     emit messageSent(chatID, text);
 }
+
+void Model::sendFindUserRequest(const QString& query)
+{
+    FindUserRequestData payload;
+    payload.query = query.toStdString();
+    auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+}
+
+void Model::sendCreateChatRequest(const QString& peerUsername)
+{
+    CreateChatRequestData payload;
+    payload.peerUsername = peerUsername.toStdString();
+    auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+}
+
+void Model::sendChatListRequest()
+{
+    ChatListRequestData payload;
+    auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+}

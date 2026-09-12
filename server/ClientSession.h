@@ -31,8 +31,6 @@ private:
 	int userID_ = -1;
     std::string username_;
 
-;
-
 	void processPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 	
 	void handleConnectRequestData(uint32_t messageID, uint32_t sessionID);
@@ -43,7 +41,7 @@ private:
 	void handleDeleteRequestData(uint32_t messageID, uint32_t sessionID, const DeleteRequestData& data);
 	void handleFindUserRequestData(uint32_t messageID, uint32_t sessionID, const FindUserRequestData& data);
 	void handleCreateChatRequestData(uint32_t messageID, uint32_t sessionID, const CreateChatRequestData& data);
-	void handleChatListRequestData(uint32_t messageID, uint32_t sessionID)
+	void handleChatListRequestData(uint32_t messageID, uint32_t sessionID);
 	
 	bool validateIncomingPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 };

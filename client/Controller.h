@@ -21,7 +21,7 @@ private slots:
     void slotAuthRequested(const QString& username, const QString& password);
     void slotRegRequested(const QString& username, const QString& password);
     void slotDelRequested(const QString& username, const QString& password);
-    void slotMessageSendRequested(const QString& text);
+    void slotMessageSendRequested(uint32_t chatID, const QString& text);
     void slotFindUserRequested(const QString& query);
     void slotCreateChatRequested(const QString& peerUsername);
     void slotChatSelected(uint32_t chatID);
