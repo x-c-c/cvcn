@@ -19,7 +19,7 @@ public:
     void sendRegRequest(const QString& username, const QString& password);
     void sendAuthRequest(const QString& username, const QString& password);
     void sendDeleteRequest(const QString& username, const QString& password);
-
+    void sendMessage(uint32_t chatID, const QString& text);
 
 signals:
     void connected();
@@ -27,7 +27,7 @@ signals:
     void authFinished(bool success, uint32_t sessionID);
     void deleteFinished(bool success);
     void errorOccurred(const QString& errorString);
-
+    void messageSent(uint32_t chatID, const QString& text);
 private slots:
     void slotConnected();
     void slotReadyRead();

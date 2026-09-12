@@ -138,3 +138,15 @@ void Model::increaseMessageID()
 {
     ++messageID_;
 }
+
+void Model::sendMessage(uint32_t chatID, const QString& text)
+{
+    MessageSendData payload;
+    payload.senderID = sessionID_;   // пока 0, потом заменим
+    payload.chatID   = chatID;
+    payload.text     = text.toStdString();
+    auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+    emit messageSent(chatID, text);
+}

@@ -2,11 +2,15 @@
 #include <QDebug>
 #include "Validator.h"
 
-Controller::Controller(Model& model, AccountDialog& view): QObject(nullptr), model_(model), view_(view)
+Controller::Controller(Model& model, AccountDialog& view, ChatWindow& chatWindow):
+    QObject(nullptr), model_(model), view_(view), chatWindow_(chatWindow)
 {
     connect(&view_, &AccountDialog::signalAuthRequested, this, &Controller::slotAuthRequested);
     connect(&view_, &AccountDialog::signalRegRequested,  this, &Controller::slotRegRequested);
     connect(&view_, &AccountDialog::signalDelRequested,  this, &Controller::slotDelRequested);
+
+    connect(&chatWindow_, &ChatWindow::signalMessageSendRequested,
+            this, &Controller::slotMessageSendRequested);
 
     connect(&model_, &Model::registrationFinished, this, &Controller::onRegistrationFinished);
     connect(&model_, &Model::authFinished,         this, &Controller::onAuthFinished);
@@ -28,6 +32,7 @@ void Controller::slotAuthRequested(const QString& username, const QString& passw
         qWarning() << "Auth rejected locally: invalid username or password format";
         return;
     }
+    currentUsername_ = username;
     model_.sendAuthRequest(username, password);
 }
 
@@ -55,6 +60,12 @@ void Controller::slotDelRequested(const QString& username, const QString& passwo
     model_.sendDeleteRequest(username, password);
 }
 
+void Controller::slotMessageSendRequested(const QString& text)
+{
+    // chatID = 0 — заглушка, пока нет списка чатов
+    model_.sendMessage(0, text);
+}
+
 void Controller::onRegistrationFinished(bool success)
 {
     qDebug() << "Registration" << (success ? "OK" : "FAILED");
@@ -63,6 +74,12 @@ void Controller::onRegistrationFinished(bool success)
 void Controller::onAuthFinished(bool success, uint32_t sessionID)
 {
     qDebug() << "Auth" << (success ? "OK" : "FAILED") << "sessionID =" << sessionID;
+    if (success)
+    {
+        chatWindow_.setCurrentUser(currentUsername_);
+        view_.hide();
+        chatWindow_.show();
+    }
 }
 
 void Controller::onDeleteFinished(bool success)
