@@ -97,3 +97,65 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Delet
     data.success = ByteReader::readUint8(cursor, remaining);
     return remaining == 0;
 }
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, FindUserRequestData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    data.query = ByteReader::readString(cursor, remaining);
+    return remaining == 0;
+}
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, FindUserResponseData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    const uint16_t count = ByteReader::readUint16BE(cursor, remaining);
+    data.usernames.clear();
+    data.usernames.reserve(count);
+    for (uint16_t i = 0; i < count; ++i)
+        data.usernames.push_back(ByteReader::readString(cursor, remaining));
+    return remaining == 0;
+}
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, CreateChatRequestData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    data.peerUsername = ByteReader::readString(cursor, remaining);
+    return remaining == 0;
+}
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, CreateChatResponseData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    data.success      = ByteReader::readUint8(cursor, remaining);
+    data.chatID       = ByteReader::readUint32BE(cursor, remaining);
+    data.peerUsername = ByteReader::readString(cursor, remaining);
+    return remaining == 0;
+}
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, ChatListRequestData& data)
+{
+    (void)body;
+    (void)data;
+    return true;
+}
+
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, ChatListResponseData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    const uint16_t count = ByteReader::readUint16BE(cursor, remaining);
+    data.chats.clear();
+    data.chats.reserve(count);
+    for (uint16_t i = 0; i < count; ++i)
+    {
+        ChatListEntry entry;
+        entry.chatID       = ByteReader::readUint32BE(cursor, remaining);
+        entry.peerUsername = ByteReader::readString(cursor, remaining);
+        data.chats.push_back(entry);
+    }
+    return remaining == 0;
+}

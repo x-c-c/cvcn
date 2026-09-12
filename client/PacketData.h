@@ -4,16 +4,22 @@
 
 enum class PacketType : uint16_t
 {
-	ConnectRequest      = 0x1,  ///< Запрос подключения (без тела).
-	ConnectResponse     = 0x2,  ///< Ответ на подключение (без тела).
-	RegisterRequest     = 0x3,  ///< Запрос регистрации.
-	RegisterResponse    = 0x4,  ///< Ответ на регистрацию.
-	AuthRequest         = 0x5,  ///< Запрос аутентификации.
-	AuthResponse        = 0x6,  ///< Ответ на аутентификацию.
-	MessageSend         = 0x7,  ///< Отправка текстового сообщения.
-    DisconnectRequest   = 0x8,   ///< Запрос отключения (без тела).
-       DeleteRequest       = 0x9,  ///< Запрос удаления аккаунта.
-       DeleteResponse      = 0xA   ///< Ответ на удаление аккаунта.
+    ConnectRequest      = 0x1,
+    ConnectResponse     = 0x2,
+    RegisterRequest     = 0x3,
+    RegisterResponse    = 0x4,
+    AuthRequest         = 0x5,
+    AuthResponse        = 0x6,
+    MessageSend         = 0x7,
+    DisconnectRequest   = 0x8,
+    DeleteRequest       = 0x9,
+    DeleteResponse      = 0xA,
+    FindUserRequest     = 0xB,
+    FindUserResponse    = 0xC,
+    CreateChatRequest   = 0xD,
+    CreateChatResponse  = 0xE,
+    ChatListRequest     = 0xF,
+    ChatListResponse    = 0x10
 };
 
 #pragma pack(push, 1)
@@ -62,3 +68,37 @@ struct DeleteResponseData
 {
     uint8_t success;
 };
+struct FindUserRequestData
+{
+    std::string query;
+};
+struct FindUserResponseData
+{
+    std::vector<std::string> usernames;
+};
+
+struct CreateChatRequestData
+{
+    std::string peerUsername;       ///< С кем создать 1:1 чат
+};
+struct CreateChatResponseData
+{
+    uint8_t  success;
+    uint32_t chatID;
+    std::string peerUsername;
+};
+
+struct ChatListEntry
+{
+    uint32_t chatID;
+    std::string peerUsername;
+};
+struct ChatListRequestData {};
+struct ChatListResponseData
+{
+    std::vector<ChatListEntry> chats;
+};
+
+
+
+

@@ -85,3 +85,57 @@ std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t ses
     ByteWriter::writeUint8(body, data.success);
     return buildPacket(PacketType::DeleteResponse, messageID, sessionID, body);
 }
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const FindUserRequestData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeString(body, data.query);
+    return buildPacket(PacketType::FindUserRequest, messageID, sessionID, body);
+}
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const FindUserResponseData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeUint16BE(body, static_cast<uint16_t>(data.usernames.size()));
+    for (const auto& name : data.usernames)
+        ByteWriter::writeString(body, name);
+    return buildPacket(PacketType::FindUserResponse, messageID, sessionID, body);
+}
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const CreateChatRequestData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeString(body, data.peerUsername);
+    return buildPacket(PacketType::CreateChatRequest, messageID, sessionID, body);
+}
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const CreateChatResponseData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeUint8(body, data.success);
+    ByteWriter::writeUint32BE(body, data.chatID);
+    ByteWriter::writeString(body, data.peerUsername);
+    return buildPacket(PacketType::CreateChatResponse, messageID, sessionID, body);
+}
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const ChatListRequestData&)
+{
+    return buildPacket(PacketType::ChatListRequest, messageID, sessionID);
+}
+
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const ChatListResponseData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeUint16BE(body, static_cast<uint16_t>(data.chats.size()));
+    for (const auto& entry : data.chats)
+    {
+        ByteWriter::writeUint32BE(body, entry.chatID);
+        ByteWriter::writeString(body, entry.peerUsername);
+    }
+    return buildPacket(PacketType::ChatListResponse, messageID, sessionID, body);
+}
+
+
+
+
+

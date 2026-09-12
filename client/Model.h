@@ -20,6 +20,9 @@ public:
     void sendAuthRequest(const QString& username, const QString& password);
     void sendDeleteRequest(const QString& username, const QString& password);
     void sendMessage(uint32_t chatID, const QString& text);
+    void sendFindUserRequest(const QString& query);
+    void sendCreateChatRequest(const QString& peerUsername);
+    void sendChatListRequest();
 
 signals:
     void connected();
@@ -28,6 +31,9 @@ signals:
     void deleteFinished(bool success);
     void errorOccurred(const QString& errorString);
     void messageSent(uint32_t chatID, const QString& text);
+    void usersFound(const std::vector<std::string>& usernames);
+    void chatCreated(bool success, uint32_t chatID, const QString& peerUsername);
+    void chatListReceived(const std::vector<ChatListEntry>& chats);
 private slots:
     void slotConnected();
     void slotReadyRead();

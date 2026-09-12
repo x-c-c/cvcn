@@ -85,6 +85,27 @@ void Model::processIncomingPacket(const PacketHeaderRaw& header, const std::vect
             emit deleteFinished(resp.success == 1);
         break;
     }
+    case PacketType::FindUserResponse:
+    {
+        FindUserResponseData resp{};
+        if (PacketDeserializer::deserializeData(body, resp))
+            emit usersFound(resp.usernames);
+        break;
+    }
+    case PacketType::CreateChatResponse:
+    {
+        CreateChatResponseData resp{};
+        if (PacketDeserializer::deserializeData(body, resp))
+            emit chatCreated(resp.success == 1, resp.chatID, QString::fromStdString(resp.peerUsername));
+        break;
+    }
+    case PacketType::ChatListResponse:
+    {
+        ChatListResponseData resp{};
+        if (PacketDeserializer::deserializeData(body, resp))
+            emit chatListReceived(resp.chats);
+        break;
+    }
     default:
         qDebug() << "Unknown packet type:" << static_cast<int>(header.type);
         break;
