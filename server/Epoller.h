@@ -24,7 +24,9 @@ public:
 	void startEpollLoop(int serverSocketFD);
 	void stopEpollLoop();
 	void modifyFdEvents(int fileDescriptor, uint32_t events);
-	void closeClient(int fileDescriptor);
+	//void closeClient(int fileDescriptor);
+	void addFdToEpoll(int fileDescriptor, uint32_t events);
+	void removeFdFromEpoll(int fileDescriptor);
 
 private:
 	// возможно стоит поменять имя
@@ -36,10 +38,6 @@ private:
 	
 	int epollFD_ = -1;
 	std::atomic<bool> running_{false};
-
-	void addFdToEpoll(int fileDescriptor, uint32_t events);
-	void removeFdFromEpoll(int fileDescriptor);
-	void handleNewConnection(int serverSocketFD);
 		
 	static constexpr int MAX_EVENTS = 1024;
 	static constexpr int WAIT_MILLISECONDS = 1000;
