@@ -53,7 +53,7 @@ void ServerStartStop::closeSocket()
 	if (serverSocketFD_ != -1)
 	{
 		close(serverSocketFD_);
-		serverSocketFD_ == -1;
+		serverSocketFD_ = -1;
 	}
 	Logger::instance().info("Closing server socket");
 }

@@ -21,7 +21,7 @@ int main()
 	ServerStartStop server;
 	server.start(config);
 	
-	Epoller epoller(&db);
+	Epoller epoller();
 	epoller.startEpollLoop(server.getServerSocketFD());
 	
 	

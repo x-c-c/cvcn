@@ -147,7 +147,8 @@ void ClientSession::closeSession()
 {
     if (closed_)
         return;
-    closed_ = true;
+    epoller_->removeFdFromEpoll(socketDescriptor_);
     close(socketDescriptor_);
+    closed_ = true;
     Logger::instance().info("Session closed for fd {}", socketDescriptor_);
 }
