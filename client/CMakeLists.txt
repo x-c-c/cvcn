@@ -36,7 +36,8 @@ set(PROJECT_SOURCES
 )
 
 add_executable(client ${PROJECT_SOURCES}
-    Validator.h Validator.cpp )
+    Validator.h Validator.cpp
+    ChatWindow.ui )
 target_link_libraries(client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
