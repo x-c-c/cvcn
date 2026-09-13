@@ -9,12 +9,12 @@
 
 class Connection;
 
-class Model : public QObject
+class ProtocolClient : public QObject
 {
     Q_OBJECT
 public:
-    explicit Model(QObject* parent = nullptr);
-    ~Model() = default;
+    explicit ProtocolClient(QObject* parent = nullptr);
+    ~ProtocolClient() = default;
 
     void connectToServer(const QString& address, quint16 port);
 
@@ -36,8 +36,7 @@ signals:
     void usersFound(const std::vector<std::string>& usernames);
     void chatCreated(bool success, uint32_t chatID, const QString& peerUsername);
     void chatListReceived(const std::vector<ChatListEntry>& chats);
-    void messageReceived(uint32_t senderID,
-                         const QString& senderUsername,
+    void messageReceived(const QString& senderUsername,
                          uint32_t chatID,
                          const QString& text);
 

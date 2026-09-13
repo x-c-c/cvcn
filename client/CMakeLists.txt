@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(ClientOnQt VERSION 0.1 LANGUAGES CXX)
-
+project(client VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -13,44 +12,50 @@ find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 
 set(PROJECT_SOURCES
-    main.cpp
+    app/main.cpp
 
-    AccountDialog.cpp
-    AccountDialog.h
-    AccountDialog.ui
+    ui/AccountDialog.cpp
+    ui/AccountDialog.h
+    ui/AccountDialog.ui
 
-    ChatWindow.cpp
-    ChatWindow.h
-    ChatWindow.ui
+    ui/ChatWindow.cpp
+    ui/ChatWindow.h
+    ui/ChatWindow.ui
 
-    Connection.cpp
-    Connection.h
+    net/Connection.cpp
+    net/Connection.h
 
-    Model.cpp
-    Model.h
+    logic/MainController.cpp
+    logic/MainController.h
 
-    Controller.cpp
-    Controller.h
+    protocol/ProtocolClient.cpp
+    protocol/ProtocolClient.h
+    protocol/PacketData.h
+    protocol/PacketBuilder.cpp
+    protocol/PacketBuilder.h
+    protocol/PacketParser.cpp
+    protocol/PacketParser.h
 
-    Logger.cpp
-    Logger.h
-
-    Validator.cpp
-    Validator.h
-
-    ByteReader.cpp
-    ByteReader.h
-    ByteWriter.cpp
-    ByteWriter.h
-
-    PacketBuilder.cpp
-    PacketBuilder.h
-    PacketDeserializer.cpp
-    PacketDeserializer.h
-    PacketData.h
+    utils/Logger.cpp
+    utils/Logger.h
+    utils/Validator.cpp
+    utils/Validator.h
+    utils/ByteReader.cpp
+    utils/ByteReader.h
+    utils/ByteWriter.cpp
+    utils/ByteWriter.h
 )
 
 add_executable(client ${PROJECT_SOURCES})
+
+target_include_directories(client PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/app
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/net
+    ${CMAKE_CURRENT_SOURCE_DIR}/logic
+    ${CMAKE_CURRENT_SOURCE_DIR}/protocol
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils
+)
 
 target_link_libraries(client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets

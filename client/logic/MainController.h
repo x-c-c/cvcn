@@ -1,18 +1,18 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 #include <QObject>
-#include "Model.h"
+#include "ProtocolClient.h"
 #include "AccountDialog.h"
 #include "ChatWindow.h"
-class Controller : public QObject
+class MainController : public QObject
 {
     Q_OBJECT
 public:
-    Controller(Model& model, AccountDialog& view, ChatWindow& chatWindow);
+    MainController(ProtocolClient& protocolClient, AccountDialog& view, ChatWindow& chatWindow);
     void connectToServer(const QString& host, quint16 port);
 
 private:
-    Model& model_;
+    ProtocolClient& protocolClient_;
     AccountDialog& view_;
     ChatWindow& chatWindow_;
     QString currentUsername_;
@@ -34,8 +34,7 @@ private slots:
     void onDeleteFinished(bool success);
     void onError(const QString& errorString);
 
-    void onMessageReceived(uint32_t senderID,
-                           const QString& senderUsername,
+    void onMessageReceived(const QString& senderUsername,
                            uint32_t chatID,
                            const QString& text);
 };

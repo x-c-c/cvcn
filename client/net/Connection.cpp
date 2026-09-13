@@ -1,5 +1,5 @@
 #include "Connection.h"
-#include "PacketDeserializer.h"
+#include "PacketParser.h"
 
 Connection::Connection(QObject* parent):
     QObject(parent), socket_(new QTcpSocket(this))
@@ -61,7 +61,7 @@ void Connection::slotReadyRead()
     while (receiveBuffer_.size() >= sizeof(PacketHeaderRaw))
     {
         PacketHeaderRaw header;
-        if (!PacketDeserializer::deserializeHeader(receiveBuffer_, header))
+        if (!PacketParser::parseHeader(receiveBuffer_, header))
             break;
 
         const size_t totalSize = sizeof(PacketHeaderRaw) + header.messageLen;
