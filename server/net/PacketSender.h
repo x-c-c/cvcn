@@ -10,7 +10,11 @@ class PacketSender
 {
 public:
 	PacketSender(EventPoller* epoller, int socketDescriptor);
-	void send(const std::vector<uint8_t>& data);
+
+	/** @brief Поставить пакет в очередь и попробовать отправить. */
+	void sendPacket(const std::vector<uint8_t>& data);
+
+	/** @brief Вызывается EventPoller'ом, когда fd готов к записи. */
 	void handleWrite();
 
 private:

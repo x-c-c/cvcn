@@ -1,22 +1,24 @@
 #include "ListeningSocket.h"
 #include "Logger.h"
 #include <cstring>
+
 ListeningSocket::~ListeningSocket()
 {
 	closeSocket();
 }
+
 void ListeningSocket::initServerAddr(const ServerConfig& config)
 {
-	serverAddr.sin_family      = config.getDomain();
-	serverAddr.sin_addr.s_addr = config.getAddr();
-	serverAddr.sin_port        = htons(config.getPort());
+	serverAddr_.sin_family      = config.getDomain();
+	serverAddr_.sin_addr.s_addr = config.getAddr();
+	serverAddr_.sin_port        = htons(config.getPort());
 }
 
-void ListeningSocket::listen(const ServerConfig& config)
+void ListeningSocket::startListening(const ServerConfig& config)
 {
 	if (serverSocketFD_ != -1)
 	{
-		Logger::instance().warn("Server socket already open, closing it first");
+		Logger::instance().warn("Listening socket already open, closing it first");
 		closeSocket();
 	}
 
@@ -27,9 +29,11 @@ void ListeningSocket::listen(const ServerConfig& config)
 		closeSocket();
 		return;
 	}
+
 	setsockopt(serverSocketFD_, SOL_SOCKET, SO_REUSEADDR, &reuseAddrOption, sizeof(reuseAddrOption));
 	initServerAddr(config);
-	if (bind(serverSocketFD_, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) != 0)
+
+	if (bind(serverSocketFD_, reinterpret_cast<sockaddr*>(&serverAddr_), sizeof(serverAddr_)) != 0)
 	{
 		Logger::instance().critical("bind() on port {} failed: {}", config.getPort(), strerror(errno));
 		closeSocket();
@@ -42,10 +46,8 @@ void ListeningSocket::listen(const ServerConfig& config)
 		closeSocket();
 		return;
 	}
-	
+
 	Logger::instance().info("Server listening on port {}", config.getPort());
-
-
 }
 
 void ListeningSocket::closeSocket()
@@ -54,6 +56,6 @@ void ListeningSocket::closeSocket()
 	{
 		close(serverSocketFD_);
 		serverSocketFD_ = -1;
+		Logger::instance().info("Closing server socket");
 	}
-	Logger::instance().info("Closing server socket");
 }

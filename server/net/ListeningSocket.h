@@ -3,19 +3,27 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-class Database;
-
 class ListeningSocket
 {
-private:
-	int serverSocketFD_ = -1;			///< Дескриптор слушающего сокета.
-	sockaddr_in serverAddr{};
-	static constexpr int reuseAddrOption = 1;		///< Значение для SO_REUSEADDR (1 — разрешить)
-	
-	void initServerAddr(const ServerConfig& config);
 public:
+	ListeningSocket() = default;
 	~ListeningSocket();
-	int fileDescriptor()	{ return serverSocketFD_; }
-	void listen(const ServerConfig& config);
+
+	ListeningSocket(const ListeningSocket&) = delete;
+	ListeningSocket& operator=(const ListeningSocket&) = delete;
+
+	int fileDescriptor() const { return serverSocketFD_; }
+
+	/** @brief Создать, привязать к адресу и перевести в режим прослушивания. */
+	void startListening(const ServerConfig& config);
+
+	/** @brief Закрыть сокет, если он открыт. Идемпотентно. */
 	void closeSocket();
+
+private:
+	int serverSocketFD_ = -1;
+	sockaddr_in serverAddr_{};
+	static constexpr int reuseAddrOption = 1;
+
+	void initServerAddr(const ServerConfig& config);
 };

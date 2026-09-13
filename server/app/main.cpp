@@ -42,7 +42,7 @@ int main()
 	config.setPort(chosenPort);
 
 	ListeningSocket listener;
-	listener.listen(config);
+	listener.startListening(config);
 
 	EventPoller epoller;
 	SessionManager sessionManager(&dispatcher, &sessionRegistry, &epoller);

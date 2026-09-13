@@ -27,8 +27,7 @@ public:
 	int getUserID() const { return userID_; }
 	const std::string& getUsername() const { return username_; }
 	void setAuthenticated(int userID, const std::string& username);
-
-	void sendRaw(const std::vector<uint8_t>& data) { sender_.send(data); }
+	void sendRaw(const std::vector<uint8_t>& data) { sender_.sendPacket(data); }
 
 private:
 	static constexpr size_t TEMP_BUFFER_SIZE = 4096;
