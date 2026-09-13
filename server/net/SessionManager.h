@@ -1,6 +1,5 @@
 #pragma once
 #include <unordered_map>
-#include <memory>
 #include <cstdint>
 
 class ClientSession;
@@ -11,21 +10,24 @@ class EventPoller;
 class SessionManager
 {
 public:
-	SessionManager(PacketDispatcher* dispatcher,
-				   SessionRegistry* sessionRegistry,
-				   EventPoller* eventPoller);
-	~SessionManager();
+    SessionManager(PacketDispatcher* dispatcher,
+                   SessionRegistry* sessionRegistry,
+                   EventPoller* eventPoller);
+    ~SessionManager();
 
-	void onNewConnection(int fileDescriptor);
-	void onRead(int fileDescriptor);
-	void onWrite(int fileDescriptor);
-	void onError(int fileDescriptor, uint32_t events);
+    SessionManager(const SessionManager&) = delete;
+    SessionManager& operator=(const SessionManager&) = delete;
+
+    void onNewConnection(int fileDescriptor);
+    void onRead(int fileDescriptor);
+    void onWrite(int fileDescriptor);
+    void onError(int fileDescriptor, uint32_t events);
 
 private:
-	PacketDispatcher* dispatcher_;
-	SessionRegistry* sessionRegistry_;
-	EventPoller* eventPoller_;
-	std::unordered_map<int, std::unique_ptr<ClientSession>> sessions_;
+    PacketDispatcher* dispatcher_;
+    SessionRegistry* sessionRegistry_;
+    EventPoller* eventPoller_;
+    std::unordered_map<int, ClientSession*> sessions_;
 
-	void closeClient(int fileDescriptor);
+    void closeClient(int fileDescriptor);
 };

@@ -2,28 +2,28 @@
 #include <cstdint>
 #include "PacketData.h"
 
-class ClientSession;
-class UserRepository;
-class SessionRegistry;
+class IClientSession;
+class IUserRepository;
+class ISessionRegistry;
 
 class AuthService
 {
 public:
-	AuthService(UserRepository* userRepo, SessionRegistry* sessionRegistry);
+    AuthService(IUserRepository* userRepo, ISessionRegistry* sessionRegistry);
 
-	void handleRegisterRequest(const PacketHeaderRaw& header,
-							   const RegisterRequestData& data,
-							   ClientSession& session);
+    void handleRegisterRequest(const PacketHeaderRaw& header,
+                               const RegisterRequestData& data,
+                               IClientSession* session);
 
-	void handleAuthRequest(const PacketHeaderRaw& header,
-						   const AuthRequestData& data,
-						   ClientSession& session);
+    void handleAuthRequest(const PacketHeaderRaw& header,
+                           const AuthRequestData& data,
+                           IClientSession* session);
 
-	void handleDeleteRequest(const PacketHeaderRaw& header,
-							 const DeleteRequestData& data,
-							 ClientSession& session);
+    void handleDeleteRequest(const PacketHeaderRaw& header,
+                             const DeleteRequestData& data,
+                             IClientSession* session);
 
 private:
-	UserRepository* userRepository_;
-	SessionRegistry* sessionRegistry_;
+    IUserRepository* userRepository_;
+    ISessionRegistry* sessionRegistry_;
 };

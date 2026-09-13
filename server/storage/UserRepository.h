@@ -1,18 +1,20 @@
 #pragma once
 #include <string>
 #include <sqlite3.h>
-class UserRepository
+#include "IUserRepository.h"
+
+class UserRepository : public IUserRepository
 {
 public:
-	explicit UserRepository(sqlite3* db);
+    explicit UserRepository(sqlite3* db);
 
-	bool userExists(const std::string& username);
-	bool addUser(const std::string& username, const std::string& passwordHash);
-	bool deleteUser(const std::string& username, const std::string& passwordHash);
+    bool userExists(const std::string& username) override;
+    bool addUser(const std::string& username, const std::string& passwordHash) override;
+    bool deleteUser(const std::string& username, const std::string& passwordHash) override;
 
-	std::string getUserPasswordHash(const std::string& username);
-	int getUserID(const std::string& username);
+    std::string getUserPasswordHash(const std::string& username) override;
+    int getUserID(const std::string& username) override;
 
 private:
-	sqlite3* db_;
+    sqlite3* db_;
 };

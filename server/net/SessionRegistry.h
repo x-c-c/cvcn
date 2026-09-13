@@ -2,18 +2,25 @@
 #include <unordered_map>
 #include <vector>
 #include <cstdint>
+#include "ISessionRegistry.h"
 
-class ClientSession;
+class IClientSession;
 
-class SessionRegistry
+/**
+ * @file SessionRegistry.h
+ * @brief Индекс «userID → активная сессия».
+ *
+ * Не владеет сессиями. Только хранит указатели, которые
+ * живут в SessionManager.
+ */
+class SessionRegistry : public ISessionRegistry
 {
 public:
-	void registerUser(int userID, ClientSession* session);
-	void unregisterUser(int userID);
-
-	ClientSession* findByUserID(int userID) const;
-	std::vector<ClientSession*> findByUserIDs(const std::vector<int>& userIDs) const;
+    void registerUser(int userID, IClientSession* session) override;
+    void unregisterUser(int userID) override;
+    IClientSession* findByUserID(int userID) const override;
+    std::vector<IClientSession*> findByUserIDs(const std::vector<int>& userIDs) const override;
 
 private:
-	std::unordered_map<int, ClientSession*> byUserID_;
+    std::unordered_map<int, IClientSession*> byUserID_;
 };

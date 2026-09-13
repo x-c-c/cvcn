@@ -2,14 +2,15 @@
 #include <cstdint>
 #include <string>
 #include <sqlite3.h>
+#include "IMessageRepository.h"
 
-class MessageRepository
+class MessageRepository : public IMessageRepository
 {
 public:
-	explicit MessageRepository(sqlite3* db);
+    explicit MessageRepository(sqlite3* db);
 
-	bool saveMessage(uint32_t chatID, int senderID, const std::string& text);
+    bool saveMessage(uint32_t chatID, int senderID, const std::string& text) override;
 
 private:
-	sqlite3* db_;
+    sqlite3* db_;
 };

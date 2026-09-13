@@ -2,29 +2,28 @@
 #include <cstdint>
 #include "PacketData.h"
 
-class ClientSession;
-class ChatRepository;
-class MessageRepository;
-class SessionRegistry;
+class IClientSession;
+class IChatRepository;
+class IMessageRepository;
+class ISessionRegistry;
 
 class MessageService
 {
 public:
-	MessageService(MessageRepository* msgRepo,
-				   ChatRepository* chatRepo,
-				   SessionRegistry* sessionRegistry);
+    MessageService(IMessageRepository* msgRepo,
+                   IChatRepository* chatRepo,
+                   ISessionRegistry* sessionRegistry);
 
-	void handleMessageSend(const PacketHeaderRaw& header,
-						   const MessageSendData& data,
-						   ClientSession& session);
+    void handleMessageSend(const PacketHeaderRaw& header,
+                           const MessageSendData& data,
+                           IClientSession* session);
 
 private:
-	MessageRepository* messageRepository_;
-	ChatRepository* chatRepository_;
-	SessionRegistry* sessionRegistry_;
+    IMessageRepository* messageRepository_;
+    IChatRepository* chatRepository_;
+    ISessionRegistry* sessionRegistry_;
 
-	/** @brief Разослать MessageReceive всем участникам чата, кроме отправителя. */
-	void broadcastToChat(const std::vector<int>& memberIDs,
-						 int excludeUserID,
-						 const MessageReceiveData& payload);
+    void broadcastToChat(const std::vector<int>& memberIDs,
+                         int excludeUserID,
+                         const MessageReceiveData& payload);
 };

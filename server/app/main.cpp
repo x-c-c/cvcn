@@ -14,46 +14,76 @@
 #include "PacketDispatcher.h"
 #include "EventPoller.h"
 #include "SessionManager.h"
+#include <exception>
+#include <cstdlib>
+#include <iostream>
+
+namespace {
+
+void terminateHandler()
+{
+    std::cerr << "[fatal] Unhandled exception, terminating" << std::endl;
+    std::abort();
+}
+
+} // namespace
 
 int main()
 {
-	ShutdownSignal::setup();
-	LOG_INFO("Server starting up");
+    std::set_terminate(terminateHandler);
 
-	Database db("chat.db");
-	UserRepository userRepository(db.getHandle());
-	ChatRepository chatRepository(db.getHandle());
-	MessageRepository messageRepository(db.getHandle());
+    try
+    {
+        ShutdownSignal::setup();
+        LOG_INFO("Server starting up");
 
-	SessionRegistry sessionRegistry;
-	AuthService authService(&userRepository, &sessionRegistry);
-	ChatService chatService(&userRepository, &chatRepository);
-	MessageService messageService(&messageRepository, &chatRepository, &sessionRegistry);
+        Database db("chat.db");
+        UserRepository userRepository(db.getHandle());
+        ChatRepository chatRepository(db.getHandle());
+        MessageRepository messageRepository(db.getHandle());
 
-	PacketDispatcher dispatcher(&authService, &chatService, &messageService);
+        SessionRegistry sessionRegistry;
+        AuthService authService(&userRepository, &sessionRegistry);
+        ChatService chatService(&userRepository, &chatRepository);
+        MessageService messageService(&messageRepository, &chatRepository, &sessionRegistry);
 
-	ServerConfig config;
-	const int chosenPort = promptForPort(config.getPort());
-	if (chosenPort == -1)
-	{
-		LOG_INFO("Shutdown requested during port selection");
-		return 0;
-	}
-	config.setPort(chosenPort);
+        PacketDispatcher dispatcher(&authService, &chatService, &messageService);
 
-	ListeningSocket listener;
-	listener.startListening(config);
+        ServerConfig config;
+        const int chosenPort = promptForPort(config.getPort());
+        if (chosenPort == -1)
+        {
+            LOG_INFO("Shutdown requested during port selection");
+            return 0;
+        }
+        config.setPort(chosenPort);
 
-	EventPoller eventPoller;
-	SessionManager sessionManager(&dispatcher, &sessionRegistry, &eventPoller);
+        ListeningSocket listener;
+        listener.startListening(config);
 
-	eventPoller.setNewConnectionCallback([&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
-	eventPoller.setReadEventCallback   ([&sessionManager](int fd){ sessionManager.onRead(fd); });
-	eventPoller.setWriteEventCallback  ([&sessionManager](int fd){ sessionManager.onWrite(fd); });
-	eventPoller.setErrorEventCallback  ([&sessionManager](int fd, uint32_t ev){ sessionManager.onError(fd, ev); });
+        EventPoller eventPoller;
+        SessionManager sessionManager(&dispatcher, &sessionRegistry, &eventPoller);
 
-	eventPoller.startEventLoop(listener.fileDescriptor());
+        eventPoller.setNewConnectionCallback([&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
+        eventPoller.setReadEventCallback   ([&sessionManager](int fd){ sessionManager.onRead(fd); });
+        eventPoller.setWriteEventCallback  ([&sessionManager](int fd){ sessionManager.onWrite(fd); });
+        eventPoller.setErrorEventCallback  ([&sessionManager](int fd, uint32_t ev){ sessionManager.onError(fd, ev); });
 
-	LOG_INFO("Server shutdown");
-	return 0;
+        eventPoller.startEventLoop(listener.fileDescriptor());
+
+        LOG_INFO("Server shutdown");
+        return 0;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "[fatal] " << e.what() << std::endl;
+        LOG_CRITICAL("Fatal exception: {}", e.what());
+        return 1;
+    }
+    catch (...)
+    {
+        std::cerr << "[fatal] Unknown exception" << std::endl;
+        LOG_CRITICAL("Fatal unknown exception");
+        return 1;
+    }
 }

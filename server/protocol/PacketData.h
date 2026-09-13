@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "ChatListEntry.h"
 
 enum class PacketType : uint16_t
 {
@@ -65,7 +66,7 @@ struct MessageSendData
 
 struct MessageReceiveData
 {
-    std::string senderUsername; ///< Имя отправителя, чтобы клиент не делал доп. запросов
+    std::string senderUsername;
     uint32_t chatID;
     std::string text;
 };
@@ -102,11 +103,6 @@ struct CreateChatResponseData
     std::string peerUsername;
 };
 
-struct ChatListEntry
-{
-    uint32_t chatID;
-    std::string peerUsername;
-};
 struct ChatListRequestData {};
 struct ChatListResponseData
 {
