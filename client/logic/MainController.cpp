@@ -2,34 +2,43 @@
 #include "Validator.h"
 #include "Logger.h"
 #include <QInputDialog>
-#include <QMessageBox>
-MainController::MainController(ProtocolClient& protocolClient, AccountDialog& accountDialog, ChatWindow& chatWindow):
-    QObject(nullptr), protocolClient_(protocolClient), accountDialog_(accountDialog), chatWindow_(chatWindow)
+
+MainController::MainController(ProtocolClient& protocolClient,
+                               AccountDialog& accountDialog,
+                               ChatWindow& chatWindow):
+    QObject(nullptr),
+    protocolClient_(protocolClient),
+    accountDialog_(accountDialog),
+    chatWindow_(chatWindow)
 {
     connect(&accountDialog_, &AccountDialog::signalAuthRequested, this, &MainController::slotAuthRequested);
     connect(&accountDialog_, &AccountDialog::signalRegRequested,  this, &MainController::slotRegRequested);
     connect(&accountDialog_, &AccountDialog::signalDelRequested,  this, &MainController::slotDelRequested);
 
     connect(&chatWindow_, &ChatWindow::signalMessageSendRequested, this, &MainController::slotMessageSendRequested);
+    connect(&chatWindow_, &ChatWindow::signalFindUserRequested,    this, &MainController::slotFindUserRequested);
+    connect(&chatWindow_, &ChatWindow::signalCreateChatRequested,  this, &MainController::slotCreateChatRequested);
+    connect(&chatWindow_, &ChatWindow::signalChatSelected,         this, &MainController::slotChatSelected);
+
     connect(&protocolClient_, &ProtocolClient::signalRegistrationFinished, this, &MainController::slotRegistrationFinished);
     connect(&protocolClient_, &ProtocolClient::signalAuthFinished,         this, &MainController::slotAuthFinished);
     connect(&protocolClient_, &ProtocolClient::signalDeleteFinished,       this, &MainController::slotDeleteFinished);
     connect(&protocolClient_, &ProtocolClient::signalErrorOccurred,        this, &MainController::slotError);
-    connect(&chatWindow_, &ChatWindow::signalFindUserRequested, this, &MainController::slotFindUserRequested);
-    connect(&chatWindow_, &ChatWindow::signalCreateChatRequested, this, &MainController::slotCreateChatRequested);
-    connect(&chatWindow_, &ChatWindow::signalChatSelected, this, &MainController::slotChatSelected);
-
-    connect(&protocolClient_, &ProtocolClient::signalUsersFound, this, &MainController::slotUsersFound);
-    connect(&protocolClient_, &ProtocolClient::signalChatCreated, this, &MainController::slotChatCreated);
-    connect(&protocolClient_, &ProtocolClient::signalChatListReceived, this, &MainController::slotChatListReceived);
-
-
-    connect(&protocolClient_, &ProtocolClient::signalMessageReceived, this, &MainController::slotMessageReceived);
+    connect(&protocolClient_, &ProtocolClient::signalUsersFound,           this, &MainController::slotUsersFound);
+    connect(&protocolClient_, &ProtocolClient::signalChatCreated,          this, &MainController::slotChatCreated);
+    connect(&protocolClient_, &ProtocolClient::signalChatListReceived,     this, &MainController::slotChatListReceived);
+    connect(&protocolClient_, &ProtocolClient::signalMessageReceived,      this, &MainController::slotMessageReceived);
 }
 
 void MainController::connectToServer(const QString& host, quint16 port)
 {
     protocolClient_.connectToServer(host, port);
+}
+
+void MainController::slotAboutToQuit()
+{
+    LOG_INFO("Client shutting down, sending DisconnectRequest");
+    protocolClient_.sendDisconnectRequest();
 }
 
 void MainController::slotAuthRequested(const QString& username, const QString& password)
@@ -69,7 +78,6 @@ void MainController::slotDelRequested(const QString& username, const QString& pa
     protocolClient_.sendDeleteRequest(username, password);
 }
 
-
 void MainController::slotMessageSendRequested(uint32_t chatID, const QString& text)
 {
     protocolClient_.sendMessage(chatID, text);
@@ -101,6 +109,7 @@ void MainController::slotError(const QString& errorString)
 {
     LOG_ERROR("{}", errorString.toStdString());
 }
+
 void MainController::slotFindUserRequested(const QString& query)
 {
     protocolClient_.sendFindUserRequest(query);
@@ -121,15 +130,17 @@ void MainController::slotUsersFound(const std::vector<std::string>& usernames)
 {
     if (usernames.empty())
     {
-        QMessageBox::information(&chatWindow_, "Search", "No users found");
+        chatWindow_.showInformation(QStringLiteral("Search"),
+                                    QStringLiteral("No users found"));
         return;
     }
     QStringList list;
     for (const auto& u : usernames)
         list << QString::fromStdString(u);
     bool ok = false;
-    const QString chosen = QInputDialog::getItem(&chatWindow_, "Found users",
-                                                 "Select user:", list, 0, false, &ok);
+    const QString chosen = QInputDialog::getItem(&chatWindow_, QStringLiteral("Found users"),
+                                                 QStringLiteral("Select user:"),
+                                                 list, 0, false, &ok);
     if (ok && !chosen.isEmpty())
         protocolClient_.sendCreateChatRequest(chosen);
 }
@@ -139,7 +150,8 @@ void MainController::slotChatCreated(bool success, uint32_t chatID, const QStrin
     if (success)
         chatWindow_.addChat(chatID, peerUsername);
     else
-        QMessageBox::warning(&chatWindow_, "Chat", "Failed to create chat");
+        chatWindow_.showWarning(QStringLiteral("Chat"),
+                                QStringLiteral("Failed to create chat"));
 }
 
 void MainController::slotChatListReceived(const std::vector<ChatListEntry>& chats)
@@ -148,11 +160,8 @@ void MainController::slotChatListReceived(const std::vector<ChatListEntry>& chat
 }
 
 void MainController::slotMessageReceived(const QString& senderUsername,
-                                   uint32_t chatID,
-                                   const QString& text)
+                                         uint32_t chatID,
+                                         const QString& text)
 {
     chatWindow_.appendIncomingMessage(chatID, senderUsername, text);
 }
-
-
-

@@ -4,12 +4,19 @@
 #include "ProtocolClient.h"
 #include "AccountDialog.h"
 #include "ChatWindow.h"
+
 class MainController : public QObject
 {
     Q_OBJECT
 public:
-    MainController(ProtocolClient& protocolClient, AccountDialog& accountDialog, ChatWindow& chatWindow);
+    MainController(ProtocolClient& protocolClient,
+                   AccountDialog& accountDialog,
+                   ChatWindow& chatWindow);
     void connectToServer(const QString& host, quint16 port);
+
+public slots:
+    /** @brief Отправить DisconnectRequest перед выходом. */
+    void slotAboutToQuit();
 
 private:
     ProtocolClient& protocolClient_;
@@ -35,8 +42,8 @@ private slots:
     void slotError(const QString& errorString);
 
     void slotMessageReceived(const QString& senderUsername,
-                           uint32_t chatID,
-                           const QString& text);
+                             uint32_t chatID,
+                             const QString& text);
 };
 
 #endif // MAINCONTROLLER_H

@@ -25,6 +25,7 @@ public:
     void sendFindUserRequest(const QString& query);
     void sendCreateChatRequest(const QString& peerUsername);
     void sendChatListRequest();
+    void sendDisconnectRequest();
 
 signals:
     void signalConnected();
@@ -37,8 +38,8 @@ signals:
     void signalChatCreated(bool success, uint32_t chatID, const QString& peerUsername);
     void signalChatListReceived(const std::vector<ChatListEntry>& chats);
     void signalMessageReceived(const QString& senderUsername,
-                         uint32_t chatID,
-                         const QString& text);
+                               uint32_t chatID,
+                               const QString& text);
 
 private slots:
     void slotConnected();

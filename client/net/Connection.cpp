@@ -30,6 +30,8 @@ void Connection::send(const std::vector<uint8_t>& packet)
     const qint64 bytesWritten = socket_->write(data);
     if (bytesWritten == -1)
         emit signalErrorOccurred(socket_->errorString());
+    else
+        socket_->flush();
 }
 
 bool Connection::isConnected() const

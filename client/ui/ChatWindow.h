@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QString>
 #include "PacketData.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui
 {
@@ -19,15 +20,19 @@ public:
     explicit ChatWindow(QWidget* parent = nullptr);
     ~ChatWindow();
 
-    // Устанавливает имя текущего пользователя для отображения своих сообщений
     void setCurrentUser(const QString& username);
-
-    // Добавляет сообщение в историю
     void appendMessageInHistory(const QString& sender, const QString& text);
     void setChatList(const std::vector<ChatListEntry>& chats);
     void addChat(uint32_t chatID, const QString& peerUsername);
     uint32_t currentChatID() const { return currentChatID_; }
     void appendIncomingMessage(uint32_t chatID, const QString& sender, const QString& text);
+
+    /** @brief Показать информационное окно. Вызывается контроллером. */
+    void showInformation(const QString& title, const QString& text);
+
+    /** @brief Показать предупреждение. Вызывается контроллером. */
+    void showWarning(const QString& title, const QString& text);
+
 signals:
     void signalMessageSendRequested(uint32_t currentChatID, const QString& text);
     void signalFindUserRequested(const QString& query);
@@ -46,13 +51,3 @@ private:
 };
 
 #endif // CHATWINDOW_H
-
-
-
-
-
-
-
-
-
-

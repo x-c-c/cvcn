@@ -17,37 +17,33 @@ namespace spdlog { class logger; }
  *   [YYYY-MM-DD HH:MM:SS.mmm] [level    ] [Component        ] message
  *
  * Компонент берётся из имени файла, откуда вызван макрос.
+ *
+ * Все параметры (пути, имя логгера, размеры ротации) читаются из
+ * config/AppConfig.h, в этом файле не дублируются.
  */
 class Logger
 {
 private:
-	Logger();
-	~Logger();
+    Logger();
+    ~Logger();
 
-	std::shared_ptr<spdlog::logger> logger_;
-
-	static constexpr const char* LOG_FILE_PATH  = "logs/client.log";
-	static constexpr size_t      MAX_FILE_SIZE  = 5 * 1024 * 1024;
-	static constexpr size_t      MAX_FILE_COUNT = 3;
-	static constexpr const char* LOGGER_NAME    = "client_logger";
-	static constexpr const char* PATTERN        =
-		"[%Y-%m-%d %H:%M:%S.%e] [%-8l] %v";
+    std::shared_ptr<spdlog::logger> logger_;
 
 public:
-	static Logger& instance();
-	Logger(const Logger&) = delete;
-	Logger& operator=(const Logger&) = delete;
+    static Logger& instance();
+    Logger(const Logger&) = delete;
+    Logger& operator=(const Logger&) = delete;
 
-	void log(const char* file,
-			 spdlog::level::level_enum level,
-			 const std::string& message);
+    void log(const char* file,
+             spdlog::level::level_enum level,
+             const std::string& message);
 
-	template<typename... Args>
-	void log(const char* file, spdlog::level::level_enum level,
-			 const std::string& format, Args&&... args)
-	{
-		log(file, level, fmt::format(format, std::forward<Args>(args)...));
-	}
+    template<typename... Args>
+    void log(const char* file, spdlog::level::level_enum level,
+             const std::string& format, Args&&... args)
+    {
+        log(file, level, fmt::format(format, std::forward<Args>(args)...));
+    }
 };
 
 #define LOG_TRACE(...)    Logger::instance().log(__FILE__, spdlog::level::trace,    __VA_ARGS__)

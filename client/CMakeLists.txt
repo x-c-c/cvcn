@@ -14,6 +14,8 @@ find_package(spdlog REQUIRED)
 set(PROJECT_SOURCES
     app/main.cpp
 
+    config/AppConfig.h
+
     ui/AccountDialog.cpp
     ui/AccountDialog.h
     ui/AccountDialog.ui
@@ -50,6 +52,7 @@ add_executable(client ${PROJECT_SOURCES})
 
 target_include_directories(client PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/app
+    ${CMAKE_CURRENT_SOURCE_DIR}/config
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
     ${CMAKE_CURRENT_SOURCE_DIR}/net
     ${CMAKE_CURRENT_SOURCE_DIR}/logic

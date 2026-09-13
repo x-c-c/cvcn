@@ -3,6 +3,7 @@
 #include "ChatWindow.h"
 #include "MainController.h"
 #include "Logger.h"
+#include "AppConfig.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
@@ -14,10 +15,15 @@ int main(int argc, char *argv[])
     ProtocolClient protocolClient;
     AccountDialog accountDialog;
     ChatWindow chatWindow;
-    MainController mainController(protocolClient, accountDialog, chatWindow);;
+    MainController mainController(protocolClient, accountDialog, chatWindow);
+
+    QObject::connect(&app, &QCoreApplication::aboutToQuit,
+                     &mainController, &MainController::slotAboutToQuit);
 
     accountDialog.show();
-    mainController.connectToServer("127.0.0.1", 55550);
+    mainController.connectToServer(
+        QString::fromUtf8(config::DEFAULT_SERVER_HOST),
+        config::DEFAULT_SERVER_PORT);
 
     return app.exec();
 }

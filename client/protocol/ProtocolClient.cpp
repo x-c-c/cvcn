@@ -166,6 +166,13 @@ void ProtocolClient::sendCreateChatRequest(const QString& peerUsername)
     increaseMessageID();
 }
 
+void ProtocolClient::sendDisconnectRequest()
+{
+    DisconnectRequestData payload;
+    sendPacket(PacketBuilder::buildPacket(messageID_, sessionID_, payload));
+    increaseMessageID();
+}
+
 void ProtocolClient::sendChatListRequest()
 {
     ChatListRequestData payload;

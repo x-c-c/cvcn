@@ -1,6 +1,8 @@
 #include "ChatWindow.h"
 #include "ui_ChatWindow.h"
 #include "Validator.h"
+#include "AppConfig.h"
+#include <QMessageBox>
 #include <QTime>
 
 ChatWindow::ChatWindow(QWidget* parent): QMainWindow(parent), ui(new Ui::ChatWindow)
@@ -25,8 +27,19 @@ void ChatWindow::setCurrentUser(const QString& username)
 
 void ChatWindow::appendMessageInHistory(const QString& sender, const QString& text)
 {
-    const QString time = QTime::currentTime().toString(QStringLiteral("HH:mm"));
+    const QString time = QTime::currentTime()
+        .toString(QString::fromUtf8(config::CHAT_TIME_FORMAT));
     ui->messagesTextBrowser->append(QStringLiteral("[%1] %2: %3").arg(time, sender, text));
+}
+
+void ChatWindow::showInformation(const QString& title, const QString& text)
+{
+    QMessageBox::information(this, title, text);
+}
+
+void ChatWindow::showWarning(const QString& title, const QString& text)
+{
+    QMessageBox::warning(this, title, text);
 }
 
 void ChatWindow::slotClickedSendButton()
@@ -100,7 +113,3 @@ void ChatWindow::appendIncomingMessage(uint32_t chatID, const QString& sender, c
     if (chatID == currentChatID_)
         appendMessageInHistory(sender, text);
 }
-
-
-
-
