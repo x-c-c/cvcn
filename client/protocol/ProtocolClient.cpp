@@ -3,6 +3,7 @@
 #include "PacketBuilder.h"
 #include "PacketParser.h"
 #include "Logger.h"
+#include <exception>
 
 ProtocolClient::ProtocolClient(Connection* connection, QObject* parent):
     QObject(parent),
@@ -39,7 +40,27 @@ void ProtocolClient::slotTransportError(ErrorKind kind, const QString& errorStri
 
 void ProtocolClient::slotRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
 {
-    processIncomingPacket(header, body);
+    // Никакой парсер не должен уронить приложение. Ловим все исключения,
+    // которые могут прилететь из std::string, std::vector, Qt-преобразований.
+    // При ошибке эмитим Protocol error и продолжаем работать.
+    try
+    {
+        processIncomingPacket(header, body);
+    }
+    catch (const std::exception& e)
+    {
+        LOG_ERROR("Exception while parsing packet type 0x{:X}: {}",
+                  header.type, e.what());
+        emit signalErrorOccurred(ErrorKind::Protocol,
+                                 QString::fromUtf8(e.what()));
+    }
+    catch (...)
+    {
+        LOG_ERROR("Unknown exception while parsing packet type 0x{:X}",
+                  header.type);
+        emit signalErrorOccurred(ErrorKind::Protocol,
+                                 QStringLiteral("Unknown parse error"));
+    }
 }
 
 void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)

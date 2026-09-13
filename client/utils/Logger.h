@@ -18,8 +18,11 @@ namespace spdlog { class logger; }
  *
  * Компонент берётся из имени файла, откуда вызван макрос.
  *
- * Все параметры (пути, имя логгера, размеры ротации) читаются из
- * config/AppConfig.h, в этом файле не дублируются.
+ * Параметры читаются из config/AppConfig.h.
+ *
+ * Особенность: инициализация не бросает исключений наружу. Если spdlog
+ * не смог открыть файл, логгер продолжает работать только в stderr.
+ * Это гарантирует, что приложение запустится даже при проблемах с ФС.
  */
 class Logger
 {
@@ -42,7 +45,18 @@ public:
     void log(const char* file, spdlog::level::level_enum level,
              const std::string& format, Args&&... args)
     {
-        log(file, level, fmt::format(format, std::forward<Args>(args)...));
+        // fmt::format может бросить fmt::format_error при неверной
+        // форматной строке. Ловим, чтобы не уронить приложение.
+        std::string message;
+        try
+        {
+            message = fmt::format(format, std::forward<Args>(args)...);
+        }
+        catch (const std::exception& e)
+        {
+            message = std::string("Log formatting error: ") + e.what();
+        }
+        log(file, level, message);
     }
 };
 
