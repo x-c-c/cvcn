@@ -48,6 +48,8 @@ void MainController::slotAuthRequested(const QString& username, const QString& p
     if (!Validator::validateUsername(u) || !Validator::validatePassword(p))
     {
         LOG_WARN("Auth rejected locally: invalid username or password format");
+        chatWindow_.showWarning(QStringLiteral("Auth"),
+                                QStringLiteral("Invalid username or password format"));
         return;
     }
     currentUsername_ = username;
@@ -80,6 +82,15 @@ void MainController::slotDelRequested(const QString& username, const QString& pa
 
 void MainController::slotMessageSendRequested(uint32_t chatID, const QString& text)
 {
+    if (!Validator::validateMessage(text.toStdString()))
+    {
+        LOG_WARN("Message rejected locally: invalid format");
+        chatWindow_.showWarning(QStringLiteral("Message"),
+                                QStringLiteral("Message rejected: invalid format"));
+        return;
+    }
+
+    chatWindow_.appendMessageInHistory(currentUsername_, text);
     protocolClient_.sendMessage(chatID, text);
 }
 
@@ -93,7 +104,6 @@ void MainController::slotAuthFinished(bool success, uint32_t sessionID)
     LOG_INFO("Auth {} sessionID = {}", success ? "OK" : "FAILED", sessionID);
     if (success)
     {
-        chatWindow_.setCurrentUser(currentUsername_);
         accountDialog_.hide();
         chatWindow_.show();
         protocolClient_.sendChatListRequest();
@@ -105,9 +115,20 @@ void MainController::slotDeleteFinished(bool success)
     LOG_INFO("Delete {}", success ? "OK" : "FAILED");
 }
 
-void MainController::slotError(const QString& errorString)
+void MainController::slotError(ErrorKind kind, const QString& errorString)
 {
-    LOG_ERROR("{}", errorString.toStdString());
+    switch (kind)
+    {
+    case ErrorKind::Transport:
+        LOG_ERROR("Transport error: {}", errorString.toStdString());
+        break;
+    case ErrorKind::Protocol:
+        LOG_ERROR("Protocol error: {}", errorString.toStdString());
+        break;
+    case ErrorKind::Business:
+        LOG_WARN("Business error: {}", errorString.toStdString());
+        break;
+    }
 }
 
 void MainController::slotFindUserRequested(const QString& query)
@@ -138,7 +159,8 @@ void MainController::slotUsersFound(const std::vector<std::string>& usernames)
     for (const auto& u : usernames)
         list << QString::fromStdString(u);
     bool ok = false;
-    const QString chosen = QInputDialog::getItem(&chatWindow_, QStringLiteral("Found users"),
+    const QString chosen = QInputDialog::getItem(&chatWindow_,
+                                                 QStringLiteral("Found users"),
                                                  QStringLiteral("Select user:"),
                                                  list, 0, false, &ok);
     if (ok && !chosen.isEmpty())

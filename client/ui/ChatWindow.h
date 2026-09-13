@@ -12,6 +12,14 @@ namespace Ui
 }
 QT_END_NAMESPACE
 
+/**
+ * @file ChatWindow.h
+ * @brief Главное окно чата: список чатов, история, поле ввода.
+ *
+ * Не выполняет валидацию данных и не решает, что показать пользователю —
+ * за это отвечает MainController. ChatWindow только эмитит намерения
+ * и отображает то, что ему прикажут.
+ */
 class ChatWindow : public QMainWindow
 {
     Q_OBJECT
@@ -20,7 +28,6 @@ public:
     explicit ChatWindow(QWidget* parent = nullptr);
     ~ChatWindow();
 
-    void setCurrentUser(const QString& username);
     void appendMessageInHistory(const QString& sender, const QString& text);
     void setChatList(const std::vector<ChatListEntry>& chats);
     void addChat(uint32_t chatID, const QString& peerUsername);
@@ -46,7 +53,6 @@ private slots:
 
 private:
     Ui::ChatWindow* ui;
-    QString currentUser_;
     uint32_t currentChatID_ = 0;
 };
 

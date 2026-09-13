@@ -1,6 +1,5 @@
 #include "ChatWindow.h"
 #include "ui_ChatWindow.h"
-#include "Validator.h"
 #include "AppConfig.h"
 #include <QMessageBox>
 #include <QTime>
@@ -18,11 +17,6 @@ ChatWindow::ChatWindow(QWidget* parent): QMainWindow(parent), ui(new Ui::ChatWin
 ChatWindow::~ChatWindow()
 {
     delete ui;
-}
-
-void ChatWindow::setCurrentUser(const QString& username)
-{
-    currentUser_ = username;
 }
 
 void ChatWindow::appendMessageInHistory(const QString& sender, const QString& text)
@@ -46,25 +40,16 @@ void ChatWindow::slotClickedSendButton()
 {
     if (currentChatID_ == 0)
     {
-        appendMessageInHistory(QStringLiteral("system"), QStringLiteral("Select a chat first"));
+        appendMessageInHistory(QStringLiteral("system"),
+                               QStringLiteral("Select a chat first"));
         return;
     }
+
     const QString text = ui->messageLineEdit->text().trimmed();
     if (text.isEmpty())
-    {
         return;
-    }
-    if (!Validator::validateMessage(text.toStdString()))
-    {
-        appendMessageInHistory(QStringLiteral("system"), QStringLiteral("Message rejected locally: invalid format"));
-        return;
-    }
 
     ui->messageLineEdit->clear();
-
-    const QString displayName = currentUser_.isEmpty() ? QStringLiteral("me") : currentUser_;
-
-    appendMessageInHistory(displayName, text);
     emit signalMessageSendRequested(currentChatID_, text);
 }
 
@@ -96,7 +81,6 @@ void ChatWindow::setChatList(const std::vector<ChatListEntry>& chats)
 
 void ChatWindow::addChat(uint32_t chatID, const QString& peerUsername)
 {
-    // Проверяем, нет ли уже такого чата
     for (int i = 0; i < ui->chatsListWidget->count(); ++i)
     {
         auto* existing = ui->chatsListWidget->item(i);

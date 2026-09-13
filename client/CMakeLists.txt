@@ -42,6 +42,7 @@ set(PROJECT_SOURCES
     utils/Logger.h
     utils/Validator.cpp
     utils/Validator.h
+    utils/ErrorKind.h
     utils/ByteReader.cpp
     utils/ByteReader.h
     utils/ByteWriter.cpp

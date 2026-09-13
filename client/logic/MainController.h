@@ -4,6 +4,7 @@
 #include "ProtocolClient.h"
 #include "AccountDialog.h"
 #include "ChatWindow.h"
+#include "ErrorKind.h"
 
 class MainController : public QObject
 {
@@ -15,7 +16,6 @@ public:
     void connectToServer(const QString& host, quint16 port);
 
 public slots:
-    /** @brief Отправить DisconnectRequest перед выходом. */
     void slotAboutToQuit();
 
 private:
@@ -39,7 +39,7 @@ private slots:
     void slotRegistrationFinished(bool success);
     void slotAuthFinished(bool success, uint32_t sessionID);
     void slotDeleteFinished(bool success);
-    void slotError(const QString& errorString);
+    void slotError(ErrorKind kind, const QString& errorString);
 
     void slotMessageReceived(const QString& senderUsername,
                              uint32_t chatID,

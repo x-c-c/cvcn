@@ -3,12 +3,14 @@
 #include "PacketBuilder.h"
 #include "PacketParser.h"
 #include "Logger.h"
-ProtocolClient::ProtocolClient(QObject* parent):
-    QObject(parent), connection_(new Connection(this))
+
+ProtocolClient::ProtocolClient(Connection* connection, QObject* parent):
+    QObject(parent),
+    connection_(connection)
 {
     connect(connection_, &Connection::signalConnected,         this, &ProtocolClient::slotConnected);
     connect(connection_, &Connection::signalDisconnected,      this, &ProtocolClient::slotDisconnected);
-    connect(connection_, &Connection::signalErrorOccurred,     this, &ProtocolClient::slotErrorOccurred);
+    connect(connection_, &Connection::signalErrorOccurred,     this, &ProtocolClient::slotTransportError);
     connect(connection_, &Connection::signalRawPacketReceived, this, &ProtocolClient::slotRawPacketReceived);
 }
 
@@ -29,10 +31,10 @@ void ProtocolClient::slotDisconnected()
     emit signalDisconnected();
 }
 
-void ProtocolClient::slotErrorOccurred(const QString& errorString)
+void ProtocolClient::slotTransportError(ErrorKind kind, const QString& errorString)
 {
     LOG_ERROR("{}", errorString.toStdString());
-    emit signalErrorOccurred(errorString);
+    emit signalErrorOccurred(kind, errorString);
 }
 
 void ProtocolClient::slotRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
@@ -49,6 +51,9 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
         RegisterResponseData resp{};
         if (PacketParser::parseData(body, resp))
             emit signalRegistrationFinished(resp.success);
+        else
+            emit signalErrorOccurred(ErrorKind::Protocol,
+                QStringLiteral("Bad RegisterResponse"));
         break;
     }
     case PacketType::AuthResponse:
@@ -56,11 +61,13 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
         AuthResponseData resp{};
         if (PacketParser::parseData(body, resp))
         {
-            const bool success = (resp.success);
-            if (success)
+            if (resp.success)
                 sessionID_ = header.sessionID;
-            emit signalAuthFinished(success, sessionID_);
+            emit signalAuthFinished(resp.success, sessionID_);
         }
+        else
+            emit signalErrorOccurred(ErrorKind::Protocol,
+                QStringLiteral("Bad AuthResponse"));
         break;
     }
     case PacketType::DeleteResponse:
@@ -68,6 +75,9 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
         DeleteResponseData resp{};
         if (PacketParser::parseData(body, resp))
             emit signalDeleteFinished(resp.success);
+        else
+            emit signalErrorOccurred(ErrorKind::Protocol,
+                QStringLiteral("Bad DeleteResponse"));
         break;
     }
     case PacketType::FindUserResponse:
@@ -75,13 +85,20 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
         FindUserResponseData resp{};
         if (PacketParser::parseData(body, resp))
             emit signalUsersFound(resp.usernames);
+        else
+            emit signalErrorOccurred(ErrorKind::Protocol,
+                QStringLiteral("Bad FindUserResponse"));
         break;
     }
     case PacketType::CreateChatResponse:
     {
         CreateChatResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit signalChatCreated(resp.success, resp.chatID, QString::fromStdString(resp.peerUsername));
+            emit signalChatCreated(resp.success, resp.chatID,
+                                   QString::fromStdString(resp.peerUsername));
+        else
+            emit signalErrorOccurred(ErrorKind::Protocol,
+                QStringLiteral("Bad CreateChatResponse"));
         break;
     }
     case PacketType::ChatListResponse:
@@ -89,6 +106,9 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
         ChatListResponseData resp{};
         if (PacketParser::parseData(body, resp))
             emit signalChatListReceived(resp.chats);
+        else
+            emit signalErrorOccurred(ErrorKind::Protocol,
+                QStringLiteral("Bad ChatListResponse"));
         break;
     }
     case PacketType::MessageReceive:
@@ -101,10 +121,15 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
                 recv.chatID,
                 QString::fromStdString(recv.text));
         }
+        else
+            emit signalErrorOccurred(ErrorKind::Protocol,
+                QStringLiteral("Bad MessageReceive"));
         break;
     }
     default:
         LOG_WARN("Unknown packet type: {}", static_cast<int>(header.type));
+        emit signalErrorOccurred(ErrorKind::Protocol,
+            QStringLiteral("Unknown packet type %1").arg(static_cast<int>(header.type)));
         break;
     }
 }
@@ -144,8 +169,8 @@ void ProtocolClient::sendDeleteRequest(const QString& username, const QString& p
 void ProtocolClient::sendMessage(uint32_t chatID, const QString& text)
 {
     MessageSendData payload;
-    payload.chatID   = chatID;
-    payload.text     = text.toStdString();
+    payload.chatID = chatID;
+    payload.text   = text.toStdString();
     sendPacket(PacketBuilder::buildPacket(messageID_, sessionID_, payload));
     increaseMessageID();
 }
@@ -166,16 +191,16 @@ void ProtocolClient::sendCreateChatRequest(const QString& peerUsername)
     increaseMessageID();
 }
 
-void ProtocolClient::sendDisconnectRequest()
+void ProtocolClient::sendChatListRequest()
 {
-    DisconnectRequestData payload;
+    ChatListRequestData payload;
     sendPacket(PacketBuilder::buildPacket(messageID_, sessionID_, payload));
     increaseMessageID();
 }
 
-void ProtocolClient::sendChatListRequest()
+void ProtocolClient::sendDisconnectRequest()
 {
-    ChatListRequestData payload;
+    DisconnectRequestData payload;
     sendPacket(PacketBuilder::buildPacket(messageID_, sessionID_, payload));
     increaseMessageID();
 }

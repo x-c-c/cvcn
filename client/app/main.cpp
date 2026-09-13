@@ -1,3 +1,4 @@
+#include "Connection.h"
 #include "ProtocolClient.h"
 #include "AccountDialog.h"
 #include "ChatWindow.h"
@@ -12,7 +13,8 @@ int main(int argc, char *argv[])
 
     LOG_INFO("Client starting up");
 
-    ProtocolClient protocolClient;
+    Connection connection;
+    ProtocolClient protocolClient(&connection);
     AccountDialog accountDialog;
     ChatWindow chatWindow;
     MainController mainController(protocolClient, accountDialog, chatWindow);

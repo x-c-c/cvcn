@@ -5,15 +5,23 @@
 #include <QString>
 #include <vector>
 #include <cstdint>
+#include "ErrorKind.h"
 #include "PacketData.h"
 
 class Connection;
 
+/**
+ * @file ProtocolClient.h
+ * @brief Клиентская часть протокола: сериализация запросов и маршрутизация ответов.
+ *
+ * Не владеет Connection, получает его через конструктор. Это позволяет
+ * подменить транспорт при тестировании.
+ */
 class ProtocolClient : public QObject
 {
     Q_OBJECT
 public:
-    explicit ProtocolClient(QObject* parent = nullptr);
+    explicit ProtocolClient(Connection* connection, QObject* parent = nullptr);
     ~ProtocolClient() = default;
 
     void connectToServer(const QString& address, quint16 port);
@@ -33,7 +41,7 @@ signals:
     void signalRegistrationFinished(bool success);
     void signalAuthFinished(bool success, uint32_t sessionID);
     void signalDeleteFinished(bool success);
-    void signalErrorOccurred(const QString& errorString);
+    void signalErrorOccurred(ErrorKind kind, const QString& errorString);
     void signalUsersFound(const std::vector<std::string>& usernames);
     void signalChatCreated(bool success, uint32_t chatID, const QString& peerUsername);
     void signalChatListReceived(const std::vector<ChatListEntry>& chats);
@@ -44,7 +52,7 @@ signals:
 private slots:
     void slotConnected();
     void slotDisconnected();
-    void slotErrorOccurred(const QString& errorString);
+    void slotTransportError(ErrorKind kind, const QString& errorString);
     void slotRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 
 private:

@@ -4,7 +4,16 @@
 #include <QString>
 #include <vector>
 #include <cstdint>
+#include "ErrorKind.h"
 #include "PacketData.h"
+
+/**
+ * @file Connection.h
+ * @brief Транспортный слой: владеет QTcpSocket, режет входящий поток на пакеты.
+ *
+ * Не знает о бизнес-логике. Эмитит signalRawPacketReceived для каждого полного пакета
+ * и signalErrorOccurred(ErrorKind::Transport, ...) при сетевых сбоях.
+ */
 class Connection : public QObject
 {
     Q_OBJECT
@@ -18,7 +27,7 @@ public:
 signals:
     void signalConnected();
     void signalDisconnected();
-    void signalErrorOccurred(const QString& errorString);
+    void signalErrorOccurred(ErrorKind kind, const QString& errorString);
     void signalRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 
 private slots:
