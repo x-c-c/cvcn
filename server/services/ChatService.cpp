@@ -6,8 +6,8 @@
 #include "Logger.h"
 
 ChatService::ChatService(UserRepository* userRepo, ChatRepository* chatRepo):
-	userRepo_(userRepo),
-	chatRepo_(chatRepo){}
+	userRepository_(userRepo),
+	chatRepository_(chatRepo){}
 
 void ChatService::handleFindUserRequest(const PacketHeaderRaw& header,
 										const FindUserRequestData& data,
@@ -16,17 +16,17 @@ void ChatService::handleFindUserRequest(const PacketHeaderRaw& header,
 	const int userID = session.getUserID();
 	if (userID == -1)
 	{
-		Logger::instance().warn("FindUserRequest before auth (fd {})", session.getfileDescriptor());
+		Logger::instance().warn("FindUserRequest before auth (fd {})", session.getFileDescriptor());
 		FindUserResponseData resp;
 		session.sendRaw(PacketBuilder::buildPacket(header.messageID, header.sessionID, resp));
 		return;
 	}
 
 	FindUserResponseData resp;
-	resp.usernames = chatRepo_->findUsers(data.query, userID);
+	resp.usernames = chatRepository_->findUsers(data.query, userID);
 	session.sendRaw(PacketBuilder::buildPacket(header.messageID, header.sessionID, resp));
 	Logger::instance().info("FindUser '{}' from fd {} → {} results",
-		data.query, session.getfileDescriptor(), resp.usernames.size());
+		data.query, session.getFileDescriptor(), resp.usernames.size());
 }
 
 void ChatService::handleCreateChatRequest(const PacketHeaderRaw& header,
@@ -42,16 +42,16 @@ void ChatService::handleCreateChatRequest(const PacketHeaderRaw& header,
 	}
 	else
 	{
-		const int peerID = userRepo_->getUserID(data.peerUsername);
+		const int peerID = userRepository_->getUserID(data.peerUsername);
 		if (peerID == -1 || peerID == userID)
 		{
 			resp.success = 0;
 			Logger::instance().warn("CreateChat failed for '{}': peer not found (fd {})",
-				data.peerUsername, session.getfileDescriptor());
+				data.peerUsername, session.getFileDescriptor());
 		}
 		else
 		{
-			const int chatID = chatRepo_->findOrCreateDirectChat(userID, peerID);
+			const int chatID = chatRepository_->findOrCreateDirectChat(userID, peerID);
 			if (chatID > 0)
 			{
 				resp.success = 1;
@@ -75,6 +75,6 @@ void ChatService::handleChatListRequest(const PacketHeaderRaw& header, ClientSes
 	ChatListResponseData resp;
 	const int userID = session.getUserID();
 	if (userID != -1)
-		resp.chats = chatRepo_->getUserChats(userID);
+		resp.chats = chatRepository_->getUserChats(userID);
 	session.sendRaw(PacketBuilder::buildPacket(header.messageID, header.sessionID, resp));
 }

@@ -78,7 +78,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 	chatID = static_cast<int>(sqlite3_last_insert_rowid(db_));
 
 	const char* insertMember = "INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)";
-	for (int uid : { user1ID, user2ID })
+	for (int userID : { user1ID, user2ID })
 	{
 		sqlite3_stmt* ms = nullptr;
 		if (sqlite3_prepare_v2(db_, insertMember, -1, &ms, nullptr) != SQLITE_OK)
@@ -88,7 +88,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 			return -1;
 		}
 		sqlite3_bind_int(ms, 1, chatID);
-		sqlite3_bind_int(ms, 2, uid);
+		sqlite3_bind_int(ms, 2, userID);
 		if (sqlite3_step(ms) != SQLITE_DONE)
 		{
 			Logger::instance().error("insert member failed: {}", sqlite3_errmsg(db_));

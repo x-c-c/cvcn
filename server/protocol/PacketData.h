@@ -44,7 +44,7 @@ struct RegisterRequestData
 };
 struct RegisterResponseData
 {
-    uint8_t success;
+    bool success;
 };
 
 struct AuthRequestData
@@ -54,12 +54,11 @@ struct AuthRequestData
 };
 struct AuthResponseData
 {
-    uint8_t success;
+    bool success;
 };
 
 struct MessageSendData
 {
-    uint32_t senderID;
     uint32_t chatID;
     std::string text;
 };
@@ -81,7 +80,7 @@ struct DeleteRequestData
 };
 struct DeleteResponseData
 {
-    uint8_t success;
+    bool success;
 };
 
 struct FindUserRequestData
@@ -99,7 +98,7 @@ struct CreateChatRequestData
 };
 struct CreateChatResponseData
 {
-    uint8_t  success;
+    bool success;
     uint32_t chatID;
     std::string peerUsername;
 };

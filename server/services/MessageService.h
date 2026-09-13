@@ -19,8 +19,8 @@ public:
 						   ClientSession& session);
 
 private:
-	MessageRepository* msgRepo_;
-	ChatRepository* chatRepo_;
+	MessageRepository* messageRepository_;
+	ChatRepository* chatRepository_;
 	SessionRegistry* sessionRegistry_;
 
 	/** @brief Разослать MessageReceive всем участникам чата, кроме отправителя. */

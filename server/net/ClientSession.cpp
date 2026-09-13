@@ -10,7 +10,7 @@ ClientSession::ClientSession(int fileDescriptor,
 							 EventPoller* epoller,
 							 PacketDispatcher* dispatcher):
 	fileDescriptor_(fileDescriptor),
-	epoller_(epoller),
+	eventPoller_(epoller),
 	dispatcher_(dispatcher),
 	sender_(epoller, fileDescriptor){}
 
@@ -69,7 +69,7 @@ void ClientSession::closeSession()
 {
 	if (closed_)
 		return;
-	epoller_->removeFdFromEpoll(fileDescriptor_);
+	eventPoller_->removeFileDescriptor(fileDescriptor_);
 	close(fileDescriptor_);
 	closed_ = true;
 	Logger::instance().info("Session closed for fd {}", fileDescriptor_);

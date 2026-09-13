@@ -21,14 +21,14 @@ int main()
 	Logger::instance().info("Server starting up");
 
 	Database db("chat.db");
-	UserRepository userRepo(db.getHandle());
-	ChatRepository chatRepo(db.getHandle());
-	MessageRepository msgRepo(db.getHandle());
+	UserRepository userRepository(db.getHandle());
+	ChatRepository chatRepository(db.getHandle());
+	MessageRepository messageRepository(db.getHandle());
 
 	SessionRegistry sessionRegistry;
-	AuthService authService(&userRepo, &sessionRegistry);
-	ChatService chatService(&userRepo, &chatRepo);
-	MessageService messageService(&msgRepo, &chatRepo, &sessionRegistry);
+	AuthService authService(&userRepository, &sessionRegistry);
+	ChatService chatService(&userRepository, &chatRepository);
+	MessageService messageService(&messageRepository, &chatRepository, &sessionRegistry);
 
 	PacketDispatcher dispatcher(&authService, &chatService, &messageService);
 
@@ -44,15 +44,15 @@ int main()
 	ListeningSocket listener;
 	listener.startListening(config);
 
-	EventPoller epoller;
-	SessionManager sessionManager(&dispatcher, &sessionRegistry, &epoller);
+	EventPoller eventPoller;
+	SessionManager sessionManager(&dispatcher, &sessionRegistry, &eventPoller);
 
-	epoller.setNewConnectionCallback([&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
-	epoller.setReadEventCallback   ([&sessionManager](int fd){ sessionManager.onRead(fd); });
-	epoller.setWriteEventCallback  ([&sessionManager](int fd){ sessionManager.onWrite(fd); });
-	epoller.setErrorEventCallback  ([&sessionManager](int fd, uint32_t ev){ sessionManager.onError(fd, ev); });
+	eventPoller.setNewConnectionCallback([&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
+	eventPoller.setReadEventCallback   ([&sessionManager](int fd){ sessionManager.onRead(fd); });
+	eventPoller.setWriteEventCallback  ([&sessionManager](int fd){ sessionManager.onWrite(fd); });
+	eventPoller.setErrorEventCallback  ([&sessionManager](int fd, uint32_t ev){ sessionManager.onError(fd, ev); });
 
-	epoller.startEpollLoop(listener.fileDescriptor());
+	eventPoller.startEventLoop(listener.fileDescriptor());
 
 	Logger::instance().info("Server shutdown");
 	return 0;

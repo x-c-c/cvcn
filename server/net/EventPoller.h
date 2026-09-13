@@ -10,30 +10,30 @@ public:
 	~EventPoller();
 
 	
-	using newConnectionCallback = std::function<void(int fileDescriptor)>;
-	using readEventCallback = std::function<void(int fileDescriptor)>;
-	using writeEventCallback = std::function<void(int fileDescriptor)>;
-	using errorEventCallback = std::function<void(int fileDescriptor, uint32_t events)>;
+	using NewConnectionCallback = std::function<void(int fileDescriptor)>;
+	using ReadEventCallback = std::function<void(int fileDescriptor)>;
+	using WriteEventCallback = std::function<void(int fileDescriptor)>;
+	using ErrorEventCallback = std::function<void(int fileDescriptor, uint32_t events)>;
 	
-	void setNewConnectionCallback(newConnectionCallback cb);	// cb == callback
-	void setReadEventCallback(readEventCallback cb);
-	void setWriteEventCallback(writeEventCallback cb);
-	void setErrorEventCallback(errorEventCallback cb);
+	void setNewConnectionCallback(NewConnectionCallback callback);
+	void setReadEventCallback(ReadEventCallback callback);
+	void setWriteEventCallback(WriteEventCallback callback);
+	void setErrorEventCallback(ErrorEventCallback callback);
 
 
-	void startEpollLoop(int serverSocketFD);
-	void stopEpollLoop();
-	void modifyFdEvents(int fileDescriptor, uint32_t events);
-	void addFdToEpoll(int fileDescriptor, uint32_t events);
-	void removeFdFromEpoll(int fileDescriptor);
+	void startEventLoop(int serverFileDescriptor);
+	void stopEventLoop();
+	void modifyFileDescriptorEvents(int fileDescriptor, uint32_t events);
+	void addFileDescriptor(int fileDescriptor, uint32_t events);
+	void removeFileDescriptor(int fileDescriptor);
 
 private:
 	// возможно стоит поменять имя
 	// сейчас это объект типа std::function<void(...)>; который хранит коллбэк на какую-либо функцию
-	newConnectionCallback onNewConnection_;
-	readEventCallback onRead_;
-	writeEventCallback onWrite_;
-	errorEventCallback onError_;
+	NewConnectionCallback onNewConnection_;
+	ReadEventCallback onRead_;
+	WriteEventCallback onWrite_;
+	ErrorEventCallback onError_;
 	
 	int epollFD_ = -1;
 	std::atomic<bool> running_{false};

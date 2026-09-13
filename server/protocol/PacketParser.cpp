@@ -43,7 +43,7 @@ bool PacketParser::parseData(const std::vector<uint8_t>& body, RegisterResponseD
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
-    data.success = ByteReader::readUint8(cursor, remaining);
+    data.success = ByteReader::readUint8(cursor, remaining) != 0;
     return remaining == 0;
 }
 
@@ -60,7 +60,7 @@ bool PacketParser::parseData(const std::vector<uint8_t>& body, AuthResponseData&
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
-    data.success = ByteReader::readUint8(cursor, remaining);
+    data.success = ByteReader::readUint8(cursor, remaining) != 0;
     return remaining == 0;
 }
 
@@ -68,7 +68,6 @@ bool PacketParser::parseData(const std::vector<uint8_t>& body, MessageSendData& 
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
-    data.senderID = ByteReader::readUint32BE(cursor, remaining);
     data.chatID   = ByteReader::readUint32BE(cursor, remaining);
     data.text     = ByteReader::readString(cursor, remaining);
     return remaining == 0;
@@ -84,7 +83,6 @@ bool PacketParser::parseData(const std::vector<uint8_t>& body, MessageReceiveDat
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
-    data.senderID       = ByteReader::readUint32BE(cursor, remaining);
     data.senderUsername = ByteReader::readString(cursor, remaining);
     data.chatID         = ByteReader::readUint32BE(cursor, remaining);
     data.text           = ByteReader::readString(cursor, remaining);
@@ -103,7 +101,7 @@ bool PacketParser::parseData(const std::vector<uint8_t>& body, DeleteResponseDat
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
-    data.success = ByteReader::readUint8(cursor, remaining);
+    data.success = ByteReader::readUint8(cursor, remaining) != 0;
     return remaining == 0;
 }
 
@@ -139,7 +137,7 @@ bool PacketParser::parseData(const std::vector<uint8_t>& body, CreateChatRespons
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
-    data.success      = ByteReader::readUint8(cursor, remaining);
+    data.success = ByteReader::readUint8(cursor, remaining) != 0;
     data.chatID       = ByteReader::readUint32BE(cursor, remaining);
     data.peerUsername = ByteReader::readString(cursor, remaining);
     return remaining == 0;

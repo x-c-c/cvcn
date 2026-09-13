@@ -22,9 +22,9 @@ std::vector<ClientSession*> SessionRegistry::findByUserIDs(const std::vector<int
 {
 	std::vector<ClientSession*> result;
 	result.reserve(userIDs.size());
-	for (int uid : userIDs)
+	for (int userID : userIDs)
 	{
-		auto it = byUserID_.find(uid);
+		auto it = byUserID_.find(userID);
 		if (it != byUserID_.end())
 			result.push_back(it->second);
 	}

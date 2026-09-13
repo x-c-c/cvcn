@@ -24,7 +24,7 @@ public:
 private:
 	PacketDispatcher* dispatcher_;
 	SessionRegistry* sessionRegistry_;
-	EventPoller* epoller_;
+	EventPoller* eventPoller_;
 	std::unordered_map<int, std::unique_ptr<ClientSession>> sessions_;
 
 	void closeClient(int fileDescriptor);

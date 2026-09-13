@@ -21,7 +21,7 @@ public:
 	void handleWrite();
 	void closeSession();
 
-	int getfileDescriptor() const { return fileDescriptor_; }
+	int getFileDescriptor() const { return fileDescriptor_; }
 	bool isClosed() const { return closed_; }
 
 	int getUserID() const { return userID_; }
@@ -34,7 +34,7 @@ private:
 
 	int fileDescriptor_;
 	bool closed_ = false;
-	EventPoller* epoller_;
+	EventPoller* eventPoller_;
 	PacketDispatcher* dispatcher_;
 	PacketAssembler assembler_;
 	PacketSender sender_;

@@ -65,7 +65,7 @@ std::string UserRepository::getUserPasswordHash(const std::string& username)
 	return hash;
 }
 
-bool UserRepository::isUserExist(const std::string& username)
+bool UserRepository::userExists(const std::string& username)
 {
 	return !getUserPasswordHash(username).empty();
 }

@@ -18,8 +18,8 @@ public:
 	void handleWrite();
 
 private:
-	EventPoller* epoller_;
-	int socketDescriptor_;
+	EventPoller* eventPoller_;
+	int fileDescriptor_;
 	std::deque<std::vector<uint8_t>> sendQueue_;
 	bool writePending_ = false;
 

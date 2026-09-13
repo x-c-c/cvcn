@@ -23,6 +23,6 @@ public:
 							   ClientSession& session);
 
 private:
-	UserRepository* userRepo_;
-	ChatRepository* chatRepo_;
+	UserRepository* userRepository_;
+	ChatRepository* chatRepository_;
 };

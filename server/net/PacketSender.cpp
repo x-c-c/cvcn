@@ -5,12 +5,12 @@
 #include <unistd.h>
 
 PacketSender::PacketSender(EventPoller* epoller, int socketDescriptor):
-	epoller_(epoller),
-	socketDescriptor_(socketDescriptor){}
+	eventPoller_(epoller),
+	fileDescriptor_(socketDescriptor){}
 
 void PacketSender::armWriteNotification()
 {
-	epoller_->modifyFdEvents(socketDescriptor_, EPOLLIN | EPOLLOUT);
+	eventPoller_->modifyFileDescriptorEvents(fileDescriptor_, EPOLLIN | EPOLLOUT);
 	writePending_ = true;
 }
 
@@ -21,7 +21,7 @@ void PacketSender::flushSendQueue()
 		std::vector<uint8_t>& buffer = sendQueue_.front();
 
 		// Явно ::send — чтобы не путаться с методом класса.
-		const ssize_t sent = ::send(socketDescriptor_, buffer.data(), buffer.size(), MSG_NOSIGNAL);
+		const ssize_t sent = ::send(fileDescriptor_, buffer.data(), buffer.size(), MSG_NOSIGNAL);
 
 		if (sent < 0)
 		{
@@ -30,7 +30,7 @@ void PacketSender::flushSendQueue()
 				armWriteNotification();
 				return;
 			}
-			Logger::instance().error("send error on fd {}: {}", socketDescriptor_, strerror(errno));
+			Logger::instance().error("send error on fd {}: {}", fileDescriptor_, strerror(errno));
 			return;
 		}
 
@@ -44,7 +44,7 @@ void PacketSender::flushSendQueue()
 		sendQueue_.pop_front();
 	}
 
-	epoller_->modifyFdEvents(socketDescriptor_, EPOLLIN);
+	eventPoller_->modifyFileDescriptorEvents(fileDescriptor_, EPOLLIN);
 	writePending_ = false;
 }
 

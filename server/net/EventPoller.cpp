@@ -10,29 +10,29 @@ EventPoller::EventPoller():
 
 EventPoller::~EventPoller()
 {
-	stopEpollLoop();
+	stopEventLoop();
 }
 
 
-void EventPoller::setNewConnectionCallback(newConnectionCallback cb)
+void EventPoller::setNewConnectionCallback(NewConnectionCallback callback)
 {
-	onNewConnection_ = std::move(cb);
+	onNewConnection_ = std::move(callback);
 }
-void EventPoller::setReadEventCallback(readEventCallback cb)
+void EventPoller::setReadEventCallback(ReadEventCallback callback)
 {
-	onRead_ = std::move(cb);
+	onRead_ = std::move(callback);
 }
-void EventPoller::setWriteEventCallback(writeEventCallback cb)
+void EventPoller::setWriteEventCallback(WriteEventCallback callback)
 {
-	onWrite_ = std::move(cb);
+	onWrite_ = std::move(callback);
 }
-void EventPoller::setErrorEventCallback(errorEventCallback cb)
+void EventPoller::setErrorEventCallback(ErrorEventCallback callback)
 {
-	onError_ = std::move(cb);
+	onError_ = std::move(callback);
 }
 
 
-void EventPoller::addFdToEpoll(int fileDescriptor, uint32_t events)
+void EventPoller::addFileDescriptor(int fileDescriptor, uint32_t events)
 {
 	epoll_event event{};				// странно звучит - eventpoll_event event
 	event.data.fd = fileDescriptor;
@@ -43,12 +43,12 @@ void EventPoller::addFdToEpoll(int fileDescriptor, uint32_t events)
 	}
 }
 
-void EventPoller::removeFdFromEpoll(int fileDescriptor)
+void EventPoller::removeFileDescriptor(int fileDescriptor)
 {
 	epoll_ctl(epollFD_, EPOLL_CTL_DEL, fileDescriptor, nullptr);
 }
 
-void EventPoller::modifyFdEvents(int fileDescriptor, uint32_t events)
+void EventPoller::modifyFileDescriptorEvents(int fileDescriptor, uint32_t events)
 {
 	epoll_event event{};
 	event.data.fd = fileDescriptor;
@@ -59,15 +59,15 @@ void EventPoller::modifyFdEvents(int fileDescriptor, uint32_t events)
 	}
 }
 
-void EventPoller::startEpollLoop(int serverSocketFD)
+void EventPoller::startEventLoop(int serverFileDescriptor)
 {
-	int flags = fcntl(serverSocketFD, F_GETFL, 0);
-	if (flags == -1 || fcntl(serverSocketFD, F_SETFL, flags | O_NONBLOCK) == -1)
+	int flags = fcntl(serverFileDescriptor, F_GETFL, 0);
+	if (flags == -1 || fcntl(serverFileDescriptor, F_SETFL, flags | O_NONBLOCK) == -1)
 	{
 		Logger::instance().critical("fcntl O_NONBLOCK on server fd failed: {}", strerror(errno));
 		return;
 	}
-	addFdToEpoll(serverSocketFD, EPOLLIN);
+	addFileDescriptor(serverFileDescriptor, EPOLLIN);
 	running_ = true;
 
 	epoll_event readyEvents[MAX_EVENTS];
@@ -85,62 +85,62 @@ void EventPoller::startEpollLoop(int serverSocketFD)
 
 		for (int i = 0; i < eventCount; ++i)
 		{
-			int socketFD = readyEvents[i].data.fd;
+			int fileDescriptor = readyEvents[i].data.fd;
 			uint32_t events = readyEvents[i].events;
 
 			if (events & (EPOLLERR | EPOLLHUP))
 			{
-				if (socketFD == serverSocketFD)
+				if (fileDescriptor == serverFileDescriptor)
 				{
-					Logger::instance().critical("Critical error on server socket (fd {}), stopping", serverSocketFD);
+					Logger::instance().critical("Critical error on server socket (fd {}), stopping", serverFileDescriptor);
 					running_ = false;
 					break;
 				}
 				if (onError_)
-					onError_(socketFD, events);
+					onError_(fileDescriptor, events);
 				continue;
 			}
 
 			if (events & EPOLLIN)
 			{
-				if (socketFD == serverSocketFD)
+				if (fileDescriptor == serverFileDescriptor)
 				{
-					int clientSocketFD = accept(serverSocketFD, nullptr, nullptr);
-					if (clientSocketFD < 0)
+					int clientFileDescriptor = accept(serverFileDescriptor, nullptr, nullptr);
+					if (clientFileDescriptor < 0)
 					{
 						if (errno != EAGAIN && errno != EWOULDBLOCK)
 							Logger::instance().error("accept() failed: {}", strerror(errno));
 					}
 					else
 					{
-						int cflags = fcntl(clientSocketFD, F_GETFL, 0);
-						if (cflags == -1 || fcntl(clientSocketFD, F_SETFL, cflags | O_NONBLOCK) == -1)
+						int cflags = fcntl(clientFileDescriptor, F_GETFL, 0);
+						if (cflags == -1 || fcntl(clientFileDescriptor, F_SETFL, cflags | O_NONBLOCK) == -1)
 						{
-							Logger::instance().error("fcntl O_NONBLOCK on client fd {} failed: {}", clientSocketFD, strerror(errno));
-							close(clientSocketFD);
+							Logger::instance().error("fcntl O_NONBLOCK on client fd {} failed: {}", clientFileDescriptor, strerror(errno));
+							close(clientFileDescriptor);
 						}
 						else
 						{
-							addFdToEpoll(clientSocketFD, EPOLLIN | EPOLLET);
+							addFileDescriptor(clientFileDescriptor, EPOLLIN | EPOLLET);
 							if (onNewConnection_)
-								onNewConnection_(clientSocketFD);
+								onNewConnection_(clientFileDescriptor);
 						}
 					}
 				}
 				else if (onRead_)
-					onRead_(socketFD);
+					onRead_(fileDescriptor);
 			}
 
 			if (events & EPOLLOUT)
 			{
 				if (onWrite_)
-					onWrite_(socketFD);
+					onWrite_(fileDescriptor);
 			}
 		}
 	}
 }
 
-void EventPoller::stopEpollLoop()
+void EventPoller::stopEventLoop()
 {
 	running_ = false;
 	if (epollFD_ != -1)

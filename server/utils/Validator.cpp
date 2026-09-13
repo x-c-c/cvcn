@@ -70,10 +70,6 @@ bool Validator::validateMessage(const std::string& message)
     return true;
 }
 
-bool Validator::validateSenderID(uint32_t senderID)
-{
-    return senderID > 0;
-}
 
 bool Validator::validateChatID(uint32_t chatID)
 {

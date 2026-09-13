@@ -7,7 +7,7 @@ ListeningSocket::~ListeningSocket()
 	closeSocket();
 }
 
-void ListeningSocket::initServerAddr(const ServerConfig& config)
+void ListeningSocket::setupServerAddress(const ServerConfig& config)
 {
 	serverAddr_.sin_family      = config.getDomain();
 	serverAddr_.sin_addr.s_addr = config.getAddr();
@@ -16,31 +16,31 @@ void ListeningSocket::initServerAddr(const ServerConfig& config)
 
 void ListeningSocket::startListening(const ServerConfig& config)
 {
-	if (serverSocketFD_ != -1)
+	if (serverFileDescriptor_ != -1)
 	{
 		Logger::instance().warn("Listening socket already open, closing it first");
 		closeSocket();
 	}
 
-	serverSocketFD_ = socket(config.getDomain(), config.getType(), config.getProtocol());
-	if (serverSocketFD_ < 0)
+	serverFileDescriptor_ = socket(config.getDomain(), config.getType(), config.getProtocol());
+	if (serverFileDescriptor_ < 0)
 	{
 		Logger::instance().critical("socket() failed: {}", strerror(errno));
 		closeSocket();
 		return;
 	}
 
-	setsockopt(serverSocketFD_, SOL_SOCKET, SO_REUSEADDR, &reuseAddrOption, sizeof(reuseAddrOption));
-	initServerAddr(config);
+	setsockopt(serverFileDescriptor_, SOL_SOCKET, SO_REUSEADDR, &reuseAddrOption, sizeof(reuseAddrOption));
+	setupServerAddress(config);
 
-	if (bind(serverSocketFD_, reinterpret_cast<sockaddr*>(&serverAddr_), sizeof(serverAddr_)) != 0)
+	if (bind(serverFileDescriptor_, reinterpret_cast<sockaddr*>(&serverAddr_), sizeof(serverAddr_)) != 0)
 	{
 		Logger::instance().critical("bind() on port {} failed: {}", config.getPort(), strerror(errno));
 		closeSocket();
 		return;
 	}
 
-	if (listen(serverSocketFD_, SOMAXCONN) != 0)
+	if (listen(serverFileDescriptor_, SOMAXCONN) != 0)
 	{
 		Logger::instance().critical("listen() failed: {}", strerror(errno));
 		closeSocket();
@@ -52,10 +52,10 @@ void ListeningSocket::startListening(const ServerConfig& config)
 
 void ListeningSocket::closeSocket()
 {
-	if (serverSocketFD_ != -1)
+	if (serverFileDescriptor_ != -1)
 	{
-		close(serverSocketFD_);
-		serverSocketFD_ = -1;
+		close(serverFileDescriptor_);
+		serverFileDescriptor_ = -1;
 		Logger::instance().info("Closing server socket");
 	}
 }

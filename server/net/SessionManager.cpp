@@ -10,7 +10,7 @@ SessionManager::SessionManager(PacketDispatcher* dispatcher,
 							   EventPoller* epoller):
 	dispatcher_(dispatcher),
 	sessionRegistry_(sessionRegistry),
-	epoller_(epoller){}
+	eventPoller_(epoller){}
 
 SessionManager::~SessionManager()
 {
@@ -18,9 +18,9 @@ SessionManager::~SessionManager()
 	{
 		if (!pair.second->isClosed())
 		{
-			const int uid = pair.second->getUserID();
-			if (sessionRegistry_ && uid != -1)
-				sessionRegistry_->unregisterUser(uid);
+			const int userID = pair.second->getUserID();
+			if (sessionRegistry_ && userID != -1)
+				sessionRegistry_->unregisterUser(userID);
 			pair.second->closeSession();
 		}
 	}
@@ -30,7 +30,7 @@ SessionManager::~SessionManager()
 void SessionManager::onNewConnection(int fileDescriptor)
 {
 	sessions_[fileDescriptor] = std::make_unique<ClientSession>(
-		fileDescriptor, epoller_, dispatcher_);
+		fileDescriptor, eventPoller_, dispatcher_);
 	Logger::instance().info("New client registered, fd={}", fileDescriptor);
 }
 
@@ -66,9 +66,9 @@ void SessionManager::closeClient(int fileDescriptor)
 	if (it == sessions_.end())
 		return;
 
-	const int uid = it->second->getUserID();
-	if (sessionRegistry_ && uid != -1)
-		sessionRegistry_->unregisterUser(uid);
+	const int userID = it->second->getUserID();
+	if (sessionRegistry_ && userID != -1)
+		sessionRegistry_->unregisterUser(userID);
 
 	if (!it->second->isClosed())
 		it->second->closeSession();

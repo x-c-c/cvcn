@@ -24,6 +24,6 @@ public:
 							 ClientSession& session);
 
 private:
-	UserRepository* userRepo_;
+	UserRepository* userRepository_;
 	SessionRegistry* sessionRegistry_;
 };
