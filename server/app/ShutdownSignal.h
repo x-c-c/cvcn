@@ -1,7 +1,7 @@
 #pragma once
 #include <csignal>
 
-class SigintHandler
+class ShutdownSignal
 {
 private:
 	static void handler(int signum);
@@ -9,5 +9,5 @@ private:
 	
 public:
 	static void setup();
-	static bool isStopRequested();
+	static bool isRequested();
 };

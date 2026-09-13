@@ -1,18 +1,18 @@
-#include "ServerStartStop.h"
+#include "ListeningSocket.h"
 #include "Logger.h"
 #include <cstring>
-ServerStartStop::~ServerStartStop()
+ListeningSocket::~ListeningSocket()
 {
 	closeSocket();
 }
-void ServerStartStop::initServerAddr(const ServerConfig& config)
+void ListeningSocket::initServerAddr(const ServerConfig& config)
 {
 	serverAddr.sin_family      = config.getDomain();
 	serverAddr.sin_addr.s_addr = config.getAddr();
 	serverAddr.sin_port        = htons(config.getPort());
 }
 
-void ServerStartStop::start(const ServerConfig& config)
+void ListeningSocket::listen(const ServerConfig& config)
 {
 	if (serverSocketFD_ != -1)
 	{
@@ -48,7 +48,7 @@ void ServerStartStop::start(const ServerConfig& config)
 
 }
 
-void ServerStartStop::closeSocket()
+void ListeningSocket::closeSocket()
 {
 	if (serverSocketFD_ != -1)
 	{

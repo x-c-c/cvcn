@@ -1,9 +1,9 @@
-#include "PacketDeserializer.h"
+#include "PacketParser.h"
 #include "ByteReader.h"
 #include <cstring>
 #include <arpa/inet.h>
 
-bool PacketDeserializer::deserializeHeader(const std::vector<uint8_t>& rawData, PacketHeaderRaw& header)
+bool PacketParser::parseHeader(const std::vector<uint8_t>& rawData, PacketHeaderRaw& header)
 {
     if (rawData.size() < sizeof(header))
         return false;
@@ -16,21 +16,21 @@ bool PacketDeserializer::deserializeHeader(const std::vector<uint8_t>& rawData, 
     return true;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, ConnectRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, ConnectRequestData& data)
 {
     (void)body;
     (void)data;
     return true;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, ConnectResponseData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, ConnectResponseData& data)
 {
     (void)body;
     (void)data;
     return true;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, RegisterRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, RegisterRequestData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -39,7 +39,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Regis
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, RegisterResponseData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, RegisterResponseData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -47,7 +47,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Regis
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, AuthRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, AuthRequestData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -56,7 +56,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, AuthR
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, AuthResponseData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, AuthResponseData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -64,7 +64,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, AuthR
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, MessageSendData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, MessageSendData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -74,13 +74,13 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Messa
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, DisconnectRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, DisconnectRequestData& data)
 {
     (void)body;
     (void)data;
     return true;
 }
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, MessageReceiveData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, MessageReceiveData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -90,7 +90,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Messa
     data.text           = ByteReader::readString(cursor, remaining);
     return remaining == 0;
 }
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, DeleteRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, DeleteRequestData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -99,7 +99,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Delet
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, DeleteResponseData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, DeleteResponseData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -107,7 +107,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Delet
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, FindUserRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, FindUserRequestData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -115,7 +115,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, FindU
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, FindUserResponseData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, FindUserResponseData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -127,7 +127,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, FindU
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, CreateChatRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, CreateChatRequestData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -135,7 +135,7 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Creat
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, CreateChatResponseData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, CreateChatResponseData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();
@@ -145,14 +145,14 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Creat
     return remaining == 0;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, ChatListRequestData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, ChatListRequestData& data)
 {
     (void)body;
     (void)data;
     return true;
 }
 
-bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, ChatListResponseData& data)
+bool PacketParser::parseData(const std::vector<uint8_t>& body, ChatListResponseData& data)
 {
     const uint8_t* cursor = body.data();
     size_t remaining = body.size();

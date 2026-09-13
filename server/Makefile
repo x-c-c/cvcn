@@ -1,66 +1,70 @@
+# Makefile для сервера мессенджера.
+
 CXX      := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -g -O2
 LDFLAGS  :=
 LDLIBS   := -lsqlite3 -lspdlog -lfmt -lpthread
 
-TARGET   := server
+TARGET    := server
 BUILD_DIR := build
 
+INCLUDES := \
+	-Iapp -Inet -Iprotocol -Iservices -Istorage -Iutils -Iconfig
+
 SRCS := \
-	main.cpp \
-	CheckPort.cpp \
-	ClientSession.cpp \
-	Database.cpp \
-	Epoller.cpp \
-	Logger.cpp \
-	PacketAssembler.cpp \
-	PacketBuilder.cpp \
-	PacketDeserializer.cpp \
-	ByteReader.cpp \
-	ByteWriter.cpp \
-	ResponseSender.cpp \
-	ServerStartStop.cpp \
-	SessionManager.cpp \
-	SessionRegistry.cpp \
-	SigintHandler.cpp \
-	Validator.cpp \
-	UserRepository.cpp \
-	ChatRepository.cpp \
-	MessageRepository.cpp \
-	AuthService.cpp \
-	ChatService.cpp \
-	MessageService.cpp \
-	PacketDispatcher.cpp
-
-
-OBJS := $(addprefix $(BUILD_DIR)/,$(SRCS:.cpp=.o))
+	app/main.cpp \
+	app/PortSelector.cpp \
+	app/ShutdownSignal.cpp \
+	net/ListeningSocket.cpp \
+	net/EventPoller.cpp \
+	net/ClientSession.cpp \
+	net/PacketAssembler.cpp \
+	net/PacketSender.cpp \
+	net/SessionManager.cpp \
+	net/SessionRegistry.cpp \
+	protocol/PacketBuilder.cpp \
+	protocol/PacketParser.cpp \
+	protocol/PacketDispatcher.cpp \
+	services/AuthService.cpp \
+	services/ChatService.cpp \
+	services/MessageService.cpp \
+	storage/Database.cpp \
+	storage/UserRepository.cpp \
+	storage/ChatRepository.cpp \
+	storage/MessageRepository.cpp \
+	utils/Logger.cpp \
+	utils/Validator.cpp \
+	utils/ByteReader.cpp \
+	utils/ByteWriter.cpp
 
 HEADERS := \
-	CheckPort.h \
-	ClientSession.h \
-	Database.h \
-	Epoller.h \
-	Logger.h \
-	PacketAssembler.h \
-	PacketBuilder.h \
-	PacketData.h \
-	PacketDeserializer.h \
-	ByteReader.h \
-	ByteWriter.h \
-	ResponseSender.h \
-	ServerConfig.h \
-	ServerStartStop.h \
-	SessionManager.h \
-	SessionRegistry.h \
-	SigintHandler.h \
-	Validator.h \
-	UserRepository.h \
-	ChatRepository.h \
-	MessageRepository.h \
-	AuthService.h \
-	ChatService.h \
-	MessageService.h \
-	PacketDispatcher.h
+	app/PortSelector.h \
+	app/ShutdownSignal.h \
+	net/ListeningSocket.h \
+	net/EventPoller.h \
+	net/ClientSession.h \
+	net/PacketAssembler.h \
+	net/PacketSender.h \
+	net/SessionManager.h \
+	net/SessionRegistry.h \
+	protocol/PacketData.h \
+	protocol/PacketBuilder.h \
+	protocol/PacketParser.h \
+	protocol/PacketDispatcher.h \
+	services/AuthService.h \
+	services/ChatService.h \
+	services/MessageService.h \
+	storage/Database.h \
+	storage/UserRepository.h \
+	storage/ChatRepository.h \
+	storage/MessageRepository.h \
+	utils/Logger.h \
+	utils/Validator.h \
+	utils/ByteReader.h \
+	utils/ByteWriter.h \
+	config/ServerConfig.h
+
+OBJS := $(addprefix $(BUILD_DIR)/,$(SRCS:.cpp=.o))
 
 .PHONY: all clean rebuild run
 
@@ -70,7 +74,8 @@ $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(BUILD_DIR)/%.o: %.cpp $(HEADERS) | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)

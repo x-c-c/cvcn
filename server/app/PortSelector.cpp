@@ -1,4 +1,4 @@
-#include "CheckPort.h"
+#include "PortSelector.h"
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <cstring>
 #include "Logger.h"
-#include "SigintHandler.h"
-bool tryCreateSocketOnPort(int port)
+#include "ShutdownSignal.h"
+bool isPortFree(int port)
 {
 	int testSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (testSocket < 0)
@@ -27,10 +27,10 @@ bool tryCreateSocketOnPort(int port)
 	return isFree;
 }
 
-int getValidPort(int defaultPort)
+int promptForPort(int defaultPort)
 {
 	std::string line;
-	while (!SigintHandler::isStopRequested())
+	while (!ShutdownSignal::isRequested())
 	{
 		std::cout << "Input port (1..65535, Enter for default " << defaultPort << "): ";
 		if (!std::getline(std::cin, line))
@@ -40,7 +40,7 @@ int getValidPort(int defaultPort)
 		}
 		if (line.empty())
 		{
-			if (tryCreateSocketOnPort(defaultPort))
+			if (isPortFree(defaultPort))
 			{
 				Logger::instance().info("Selected default port {}", defaultPort);
 				return defaultPort;
@@ -60,7 +60,7 @@ int getValidPort(int defaultPort)
 				Logger::instance().error("Port {} out of range (1...65535): {}", port, strerror(errno));
 				continue;
 			}
-			if (tryCreateSocketOnPort(port))
+			if (isPortFree(port))
 			{
 				Logger::instance().info("Selected port {}", port);
 				return port;

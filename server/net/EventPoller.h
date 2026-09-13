@@ -3,11 +3,11 @@
 #include <atomic>
 #include <functional>
 
-class Epoller
+class EventPoller
 {
 public:
-	Epoller();
-	~Epoller();
+	EventPoller();
+	~EventPoller();
 
 	
 	using newConnectionCallback = std::function<void(int fileDescriptor)>;

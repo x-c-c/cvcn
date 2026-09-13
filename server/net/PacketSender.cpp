@@ -1,19 +1,19 @@
-#include "ResponseSender.h"
-#include "Epoller.h"
+#include "PacketSender.h"
+#include "EventPoller.h"
 #include "Logger.h"
 #include <cerrno>
 #include <unistd.h>
 
-ResponseSender::ResponseSender(Epoller* epoller, int socketDescriptor):
+PacketSender::PacketSender(EventPoller* epoller, int socketDescriptor):
 	epoller_(epoller), socketDescriptor_(socketDescriptor){}
 
-void ResponseSender::armWriteNotification()
+void PacketSender::armWriteNotification()
 {
 	epoller_->modifyFdEvents(socketDescriptor_, EPOLLIN | EPOLLOUT);
 	writePending_ = true;
 }
 
-void ResponseSender::flushSendQueue()
+void PacketSender::flushSendQueue()
 {
 	while (!sendQueue_.empty())
 	{
@@ -41,14 +41,14 @@ void ResponseSender::flushSendQueue()
 	writePending_ = false;
 }
 
-void ResponseSender::sendResponse(const std::vector<uint8_t>& data)
+void PacketSender::send(const std::vector<uint8_t>& data)
 {
 	sendQueue_.push_back(data);
 	if (!writePending_)
 		flushSendQueue();
 }
 
-void ResponseSender::handleWrite()
+void PacketSender::handleWrite()
 {
 	writePending_ = false;
 	flushSendQueue();

@@ -1,8 +1,8 @@
-#include "SigintHandler.h"
+#include "ShutdownSignal.h"
 
-volatile sig_atomic_t SigintHandler::stopRequested_ = 0;
+volatile sig_atomic_t ShutdownSignal::stopRequested_ = 0;
 
-void SigintHandler::setup()
+void ShutdownSignal::setup()
 {
 	struct sigaction sa;
 	sa.sa_handler = handler;
@@ -12,12 +12,12 @@ void SigintHandler::setup()
 	sigaction(SIGTERM, &sa, nullptr);
 }
 
-void SigintHandler::handler(int signum)
+void ShutdownSignal::handler(int signum)
 {
 	if (signum == SIGINT || signum == SIGTERM)
 		stopRequested_ = 1;
 }
-bool SigintHandler::isStopRequested()
+bool ShutdownSignal::isRequested()
 {
 	return stopRequested_ != 0;
 }

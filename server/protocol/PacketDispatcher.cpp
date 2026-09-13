@@ -4,7 +4,7 @@
 #include "ChatService.h"
 #include "MessageService.h"
 #include "PacketBuilder.h"
-#include "PacketDeserializer.h"
+#include "PacketParser.h"
 #include "Validator.h"
 #include "Logger.h"
 
@@ -32,7 +32,7 @@ void PacketDispatcher::dispatch(const PacketHeaderRaw& header,
 	case PacketType::RegisterRequest:
 	{
 		RegisterRequestData data;
-		if (!PacketDeserializer::deserializeData(body, data))
+		if (!PacketParser::parseData(body, data))
 		{
 			Logger::instance().warn("Bad RegisterRequest from fd {}", session.getfileDescriptor());
 			break;
@@ -49,7 +49,7 @@ void PacketDispatcher::dispatch(const PacketHeaderRaw& header,
 	case PacketType::AuthRequest:
 	{
 		AuthRequestData data;
-		if (!PacketDeserializer::deserializeData(body, data))
+		if (!PacketParser::parseData(body, data))
 		{
 			Logger::instance().warn("Bad AuthRequest from fd {}", session.getfileDescriptor());
 			break;
@@ -66,7 +66,7 @@ void PacketDispatcher::dispatch(const PacketHeaderRaw& header,
 	case PacketType::DeleteRequest:
 	{
 		DeleteRequestData data;
-		if (!PacketDeserializer::deserializeData(body, data))
+		if (!PacketParser::parseData(body, data))
 		{
 			Logger::instance().warn("Bad DeleteRequest from fd {}", session.getfileDescriptor());
 			break;
@@ -83,7 +83,7 @@ void PacketDispatcher::dispatch(const PacketHeaderRaw& header,
 	case PacketType::FindUserRequest:
 	{
 		FindUserRequestData data;
-		if (!PacketDeserializer::deserializeData(body, data))
+		if (!PacketParser::parseData(body, data))
 		{
 			Logger::instance().warn("Bad FindUserRequest from fd {}", session.getfileDescriptor());
 			break;
@@ -100,7 +100,7 @@ void PacketDispatcher::dispatch(const PacketHeaderRaw& header,
 	case PacketType::CreateChatRequest:
 	{
 		CreateChatRequestData data;
-		if (!PacketDeserializer::deserializeData(body, data))
+		if (!PacketParser::parseData(body, data))
 		{
 			Logger::instance().warn("Bad CreateChatRequest from fd {}", session.getfileDescriptor());
 			break;
@@ -121,7 +121,7 @@ void PacketDispatcher::dispatch(const PacketHeaderRaw& header,
 	case PacketType::MessageSend:
 	{
 		MessageSendData data;
-		if (!PacketDeserializer::deserializeData(body, data))
+		if (!PacketParser::parseData(body, data))
 		{
 			Logger::instance().warn("Bad MessageSend from fd {}", session.getfileDescriptor());
 			break;

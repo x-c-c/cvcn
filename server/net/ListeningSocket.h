@@ -5,7 +5,7 @@
 
 class Database;
 
-class ServerStartStop
+class ListeningSocket
 {
 private:
 	int serverSocketFD_ = -1;			///< Дескриптор слушающего сокета.
@@ -14,8 +14,8 @@ private:
 	
 	void initServerAddr(const ServerConfig& config);
 public:
-	~ServerStartStop();
-	int getServerSocketFD()	{ return serverSocketFD_; }
-	void start(const ServerConfig& config);
+	~ListeningSocket();
+	int fileDescriptor()	{ return serverSocketFD_; }
+	void listen(const ServerConfig& config);
 	void closeSocket();
 };

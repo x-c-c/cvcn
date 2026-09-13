@@ -1,38 +1,38 @@
-#include "Epoller.h"
+#include "EventPoller.h"
 #include "Logger.h"
-#include "SigintHandler.h"
+#include "ShutdownSignal.h"
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/socket.h>
-Epoller::Epoller():
+EventPoller::EventPoller():
 	epollFD_(epoll_create1(0)), running_(false){}
 
-Epoller::~Epoller()
+EventPoller::~EventPoller()
 {
 	stopEpollLoop();
 }
 
 
-void Epoller::setNewConnectionCallback(newConnectionCallback cb)
+void EventPoller::setNewConnectionCallback(newConnectionCallback cb)
 {
 	onNewConnection_ = std::move(cb);
 }
-void Epoller::setReadEventCallback(readEventCallback cb)
+void EventPoller::setReadEventCallback(readEventCallback cb)
 {
 	onRead_ = std::move(cb);
 }
-void Epoller::setWriteEventCallback(writeEventCallback cb)
+void EventPoller::setWriteEventCallback(writeEventCallback cb)
 {
 	onWrite_ = std::move(cb);
 }
-void Epoller::setErrorEventCallback(errorEventCallback cb)
+void EventPoller::setErrorEventCallback(errorEventCallback cb)
 {
 	onError_ = std::move(cb);
 }
 
 
-void Epoller::addFdToEpoll(int fileDescriptor, uint32_t events)
+void EventPoller::addFdToEpoll(int fileDescriptor, uint32_t events)
 {
 	epoll_event event{};				// странно звучит - eventpoll_event event
 	event.data.fd = fileDescriptor;
@@ -43,12 +43,12 @@ void Epoller::addFdToEpoll(int fileDescriptor, uint32_t events)
 	}
 }
 
-void Epoller::removeFdFromEpoll(int fileDescriptor)
+void EventPoller::removeFdFromEpoll(int fileDescriptor)
 {
 	epoll_ctl(epollFD_, EPOLL_CTL_DEL, fileDescriptor, nullptr);
 }
 
-void Epoller::modifyFdEvents(int fileDescriptor, uint32_t events)
+void EventPoller::modifyFdEvents(int fileDescriptor, uint32_t events)
 {
 	epoll_event event{};
 	event.data.fd = fileDescriptor;
@@ -59,7 +59,7 @@ void Epoller::modifyFdEvents(int fileDescriptor, uint32_t events)
 	}
 }
 
-void Epoller::startEpollLoop(int serverSocketFD)
+void EventPoller::startEpollLoop(int serverSocketFD)
 {
 	int flags = fcntl(serverSocketFD, F_GETFL, 0);
 	if (flags == -1 || fcntl(serverSocketFD, F_SETFL, flags | O_NONBLOCK) == -1)
@@ -71,7 +71,7 @@ void Epoller::startEpollLoop(int serverSocketFD)
 	running_ = true;
 
 	epoll_event readyEvents[MAX_EVENTS];
-	while (running_.load() && !SigintHandler::isStopRequested())
+	while (running_.load() && !ShutdownSignal::isRequested())
 	{
 		int eventCount = epoll_wait(epollFD_, readyEvents, MAX_EVENTS, WAIT_MILLISECONDS);
 		if (eventCount == -1)
@@ -140,7 +140,7 @@ void Epoller::startEpollLoop(int serverSocketFD)
 	}
 }
 
-void Epoller::stopEpollLoop()
+void EventPoller::stopEpollLoop()
 {
 	running_ = false;
 	if (epollFD_ != -1)

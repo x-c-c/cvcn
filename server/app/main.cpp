@@ -1,8 +1,8 @@
 #include "Logger.h"
 #include "ServerConfig.h"
-#include "CheckPort.h"
-#include "ServerStartStop.h"
-#include "SigintHandler.h"
+#include "PortSelector.h"
+#include "ListeningSocket.h"
+#include "ShutdownSignal.h"
 #include "Database.h"
 #include "UserRepository.h"
 #include "ChatRepository.h"
@@ -12,12 +12,12 @@
 #include "ChatService.h"
 #include "MessageService.h"
 #include "PacketDispatcher.h"
-#include "Epoller.h"
+#include "EventPoller.h"
 #include "SessionManager.h"
 
 int main()
 {
-	SigintHandler::setup();
+	ShutdownSignal::setup();
 	Logger::instance().info("Server starting up");
 
 	Database db("chat.db");
@@ -33,7 +33,7 @@ int main()
 	PacketDispatcher dispatcher(&authService, &chatService, &messageService);
 
 	ServerConfig config;
-	const int chosenPort = getValidPort(config.getPort());
+	const int chosenPort = promptForPort(config.getPort());
 	if (chosenPort == -1)
 	{
 		Logger::instance().info("Shutdown requested during port selection");
@@ -41,10 +41,10 @@ int main()
 	}
 	config.setPort(chosenPort);
 
-	ServerStartStop server;
-	server.start(config);
+	ListeningSocket listener;
+	listener.listen(config);
 
-	Epoller epoller;
+	EventPoller epoller;
 	SessionManager sessionManager(&dispatcher, &sessionRegistry, &epoller);
 
 	epoller.setNewConnectionCallback([&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
@@ -52,7 +52,7 @@ int main()
 	epoller.setWriteEventCallback  ([&sessionManager](int fd){ sessionManager.onWrite(fd); });
 	epoller.setErrorEventCallback  ([&sessionManager](int fd, uint32_t ev){ sessionManager.onError(fd, ev); });
 
-	epoller.startEpollLoop(server.getServerSocketFD());
+	epoller.startEpollLoop(listener.fileDescriptor());
 
 	Logger::instance().info("Server shutdown");
 	return 0;

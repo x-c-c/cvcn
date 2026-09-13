@@ -6,14 +6,14 @@
 class ClientSession;
 class PacketDispatcher;
 class SessionRegistry;
-class Epoller;
+class EventPoller;
 
 class SessionManager
 {
 public:
 	SessionManager(PacketDispatcher* dispatcher,
 				   SessionRegistry* sessionRegistry,
-				   Epoller* epoller);
+				   EventPoller* epoller);
 	~SessionManager();
 
 	void onNewConnection(int fileDescriptor);
@@ -24,7 +24,7 @@ public:
 private:
 	PacketDispatcher* dispatcher_;
 	SessionRegistry* sessionRegistry_;
-	Epoller* epoller_;
+	EventPoller* epoller_;
 	std::unordered_map<int, std::unique_ptr<ClientSession>> sessions_;
 
 	void closeClient(int fileDescriptor);

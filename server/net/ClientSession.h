@@ -1,19 +1,19 @@
 #pragma once
 #include "PacketData.h"
 #include "PacketAssembler.h"
-#include "ResponseSender.h"
+#include "PacketSender.h"
 #include <sys/socket.h>
 #include <string>
 #include <vector>
 
-class Epoller;
+class EventPoller;
 class PacketDispatcher;
 
 class ClientSession
 {
 public:
 	ClientSession(int fileDescriptor,
-				  Epoller* epoller,
+				  EventPoller* epoller,
 				  PacketDispatcher* dispatcher);
 	~ClientSession();
 
@@ -28,17 +28,17 @@ public:
 	const std::string& getUsername() const { return username_; }
 	void setAuthenticated(int userID, const std::string& username);
 
-	void sendRaw(const std::vector<uint8_t>& data) { sender_.sendResponse(data); }
+	void sendRaw(const std::vector<uint8_t>& data) { sender_.send(data); }
 
 private:
 	static constexpr size_t TEMP_BUFFER_SIZE = 4096;
 
 	int fileDescriptor_;
 	bool closed_ = false;
-	Epoller* epoller_;
+	EventPoller* epoller_;
 	PacketDispatcher* dispatcher_;
 	PacketAssembler assembler_;
-	ResponseSender sender_;
+	PacketSender sender_;
 
 	int userID_ = -1;
 	std::string username_;

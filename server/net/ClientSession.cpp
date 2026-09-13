@@ -1,5 +1,5 @@
 #include "ClientSession.h"
-#include "Epoller.h"
+#include "EventPoller.h"
 #include "PacketDispatcher.h"
 #include "Logger.h"
 #include <cstring>
@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 ClientSession::ClientSession(int fileDescriptor,
-							 Epoller* epoller,
+							 EventPoller* epoller,
 							 PacketDispatcher* dispatcher):
 	fileDescriptor_(fileDescriptor),
 	epoller_(epoller),

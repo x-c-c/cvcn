@@ -2,12 +2,12 @@
 #include "ClientSession.h"
 #include "PacketDispatcher.h"
 #include "SessionRegistry.h"
-#include "Epoller.h"
+#include "EventPoller.h"
 #include "Logger.h"
 
 SessionManager::SessionManager(PacketDispatcher* dispatcher,
 							   SessionRegistry* sessionRegistry,
-							   Epoller* epoller):
+							   EventPoller* epoller):
 	dispatcher_(dispatcher),
 	sessionRegistry_(sessionRegistry),
 	epoller_(epoller){}
