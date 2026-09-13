@@ -1,5 +1,4 @@
 #include "MainController.h"
-#include <QDebug>
 #include "Validator.h"
 #include "Logger.h"
 #include <QInputDialog>

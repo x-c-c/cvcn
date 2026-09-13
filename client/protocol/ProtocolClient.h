@@ -1,5 +1,5 @@
-#ifndef MODEL_H
-#define MODEL_H
+#ifndef PROTOCOLCLIENT_H
+#define PROTOCOLCLIENT_H
 
 #include <QObject>
 #include <QString>
@@ -56,4 +56,4 @@ private:
     void processIncomingPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 };
 
-#endif // MODEL_H
+#endif // PROTOCOLCLIENT_H

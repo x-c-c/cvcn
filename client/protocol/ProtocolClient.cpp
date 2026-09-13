@@ -3,8 +3,6 @@
 #include "PacketBuilder.h"
 #include "PacketParser.h"
 #include "Logger.h"
-#include <QDebug>
-
 ProtocolClient::ProtocolClient(QObject* parent):
     QObject(parent), connection_(new Connection(this))
 {
@@ -50,7 +48,7 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
     {
         RegisterResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit signalRegistrationFinished(resp.success == 1);
+            emit signalRegistrationFinished(resp.success);
         break;
     }
     case PacketType::AuthResponse:
@@ -58,7 +56,7 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
         AuthResponseData resp{};
         if (PacketParser::parseData(body, resp))
         {
-            const bool success = (resp.success == 1);
+            const bool success = (resp.success);
             if (success)
                 sessionID_ = header.sessionID;
             emit signalAuthFinished(success, sessionID_);
@@ -69,7 +67,7 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
     {
         DeleteResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit signalDeleteFinished(resp.success == 1);
+            emit signalDeleteFinished(resp.success);
         break;
     }
     case PacketType::FindUserResponse:
@@ -83,7 +81,7 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
     {
         CreateChatResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit signalChatCreated(resp.success == 1, resp.chatID, QString::fromStdString(resp.peerUsername));
+            emit signalChatCreated(resp.success, resp.chatID, QString::fromStdString(resp.peerUsername));
         break;
     }
     case PacketType::ChatListResponse:

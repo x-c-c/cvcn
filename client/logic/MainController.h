@@ -1,5 +1,5 @@
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#ifndef MAINCONTROLLER_H
+#define MAINCONTROLLER_H
 #include <QObject>
 #include "ProtocolClient.h"
 #include "AccountDialog.h"
@@ -39,4 +39,4 @@ private slots:
                            const QString& text);
 };
 
-#endif // CONTROLLER_H
+#endif // MAINCONTROLLER_H
