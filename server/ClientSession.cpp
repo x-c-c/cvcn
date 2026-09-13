@@ -3,13 +3,25 @@
 #include "PacketBuilder.h"
 #include "PacketDeserializer.h"
 #include "Logger.h"
+#include "Validator.h"
+#include "UserRepository.h"
+#include "ChatRepository.h"
+#include "MessageRepository.h"
 #include <cstring>
 #include <cerrno>
 #include <unistd.h>
-#include "Validator.h"
 
-ClientSession::ClientSession(int fileDescriptor, Epoller* epoller, Database* db):
-	fileDescriptor_(fileDescriptor), epoller_(epoller), db_(db), sender_(epoller, fileDescriptor){}
+ClientSession::ClientSession(int fileDescriptor,
+							 Epoller* epoller,
+							 UserRepository* userRepo,
+							 ChatRepository* chatRepo,
+							 MessageRepository* msgRepo):
+	fileDescriptor_(fileDescriptor),
+	epoller_(epoller),
+	userRepo_(userRepo),
+	chatRepo_(chatRepo),
+	msgRepo_(msgRepo),
+	sender_(epoller, fileDescriptor){}
 
 ClientSession::~ClientSession()
 {
@@ -57,7 +69,7 @@ void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vect
 		Logger::instance().warn("Packet 0x{:X} rejected from fd {}: validation failed", header.type, fileDescriptor_);
 		return;
 	}
-		
+
 	switch (static_cast<PacketType>(header.type))
 	{
 	case PacketType::ConnectRequest:
@@ -137,7 +149,7 @@ void ClientSession::handleConnectRequestData(uint32_t messageID, uint32_t sessio
 void ClientSession::handleRegisterRequestData(uint32_t messageID, uint32_t sessionID, const RegisterRequestData& data)
 {
 	RegisterResponseData resp;
-	if (db_->isUserExist(data.username))
+	if (userRepo_->isUserExist(data.username))
 	{
 		resp.success = 0;
 		Logger::instance().warn("Register failed for '{}' (fd {}): user already exists",
@@ -145,8 +157,8 @@ void ClientSession::handleRegisterRequestData(uint32_t messageID, uint32_t sessi
 	}
 	else
 	{
-		std::string hash = "hash_" + data.password;
-		resp.success = db_->addUser(data.username, hash) ? 1 : 0;
+		const std::string hash = "hash_" + data.password;
+		resp.success = userRepo_->addUser(data.username, hash) ? 1 : 0;
 		if (resp.success)
 			Logger::instance().info("Register OK for '{}' (fd {})",
 				data.username, fileDescriptor_);
@@ -161,19 +173,21 @@ void ClientSession::handleRegisterRequestData(uint32_t messageID, uint32_t sessi
 void ClientSession::handleAuthRequestData(uint32_t messageID, uint32_t sessionID, const AuthRequestData& data)
 {
 	AuthResponseData resp;
-	std::string storedHash = db_->getUserPasswordHash(data.username);
+	const std::string storedHash = userRepo_->getUserPasswordHash(data.username);
 	resp.success = (!storedHash.empty() && storedHash == "hash_" + data.password) ? 1 : 0;
 
 	if (resp.success)
 	{
-		userID_ = db_->getUserID(data.username);
+		userID_ = userRepo_->getUserID(data.username);
 		username_ = data.username;
-		Logger::instance().info("Auth OK for '{}' (fd {})", data.username, fileDescriptor_);
+		Logger::instance().info("Auth OK for '{}' (fd {}, uid {})",
+			data.username, fileDescriptor_, userID_);
 	}
-		
-		
 	else
-		Logger::instance().warn("Auth failed for '{}' (fd {})", data.username, fileDescriptor_);
+	{
+		Logger::instance().warn("Auth failed for '{}' (fd {})",
+			data.username, fileDescriptor_);
+	}
 
 	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
 	sender_.sendResponse(response);
@@ -181,7 +195,9 @@ void ClientSession::handleAuthRequestData(uint32_t messageID, uint32_t sessionID
 
 void ClientSession::handleMessageSendData(uint32_t messageID, uint32_t sessionID, const MessageSendData& data)
 {
-	Logger::instance().info("Message from sender={} to chat={} (fd {}): '{}'", data.senderID, data.chatID, fileDescriptor_, data.text);
+	// Шаг 5: здесь будет сохранение в MessageRepository и рассылка через SessionRegistry.
+	Logger::instance().info("Message from sender={} to chat={} (fd {}): '{}'",
+		data.senderID, data.chatID, fileDescriptor_, data.text);
 	(void)messageID;
 	(void)sessionID;
 }
@@ -192,12 +208,11 @@ void ClientSession::handleDisconnectRequestData()
 	closeSession();
 }
 
-void ClientSession::handleDeleteRequestData(uint32_t messageID, uint32_t sessionID,
-	const DeleteRequestData& data)
+void ClientSession::handleDeleteRequestData(uint32_t messageID, uint32_t sessionID, const DeleteRequestData& data)
 {
 	DeleteResponseData resp;
-	std::string hash = "hash_" + data.password;
-	resp.success = db_->deleteUser(data.username, hash) ? 1 : 0;
+	const std::string hash = "hash_" + data.password;
+	resp.success = userRepo_->deleteUser(data.username, hash) ? 1 : 0;
 
 	if (resp.success)
 		Logger::instance().info("Delete OK for '{}' (fd {})",
@@ -206,6 +221,71 @@ void ClientSession::handleDeleteRequestData(uint32_t messageID, uint32_t session
 		Logger::instance().warn("Delete failed for '{}' (fd {}): user not found or wrong password",
 			data.username, fileDescriptor_);
 
+	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
+	sender_.sendResponse(response);
+}
+
+void ClientSession::handleFindUserRequestData(uint32_t messageID, uint32_t sessionID, const FindUserRequestData& data)
+{
+	if (userID_ == -1)
+	{
+		Logger::instance().warn("FindUserRequest before auth (fd {})", fileDescriptor_);
+		FindUserResponseData resp;
+		auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
+		sender_.sendResponse(response);
+		return;
+	}
+
+	FindUserResponseData resp;
+	resp.usernames = chatRepo_->findUsers(data.query, userID_);
+	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
+	sender_.sendResponse(response);
+	Logger::instance().info("FindUser '{}' from fd {} → {} results",
+		data.query, fileDescriptor_, resp.usernames.size());
+}
+
+void ClientSession::handleCreateChatRequestData(uint32_t messageID, uint32_t sessionID, const CreateChatRequestData& data)
+{
+	CreateChatResponseData resp{};
+	if (userID_ == -1)
+	{
+		resp.success = 0;
+	}
+	else
+	{
+		const int peerID = userRepo_->getUserID(data.peerUsername);
+		if (peerID == -1 || peerID == userID_)
+		{
+			resp.success = 0;
+			Logger::instance().warn("CreateChat failed for '{}': peer not found (fd {})",
+				data.peerUsername, fileDescriptor_);
+		}
+		else
+		{
+			const int chatID = chatRepo_->findOrCreateDirectChat(userID_, peerID);
+			if (chatID > 0)
+			{
+				resp.success = 1;
+				resp.chatID = static_cast<uint32_t>(chatID);
+				resp.peerUsername = data.peerUsername;
+				Logger::instance().info("Chat {} created/found between '{}' and '{}'",
+					chatID, username_, data.peerUsername);
+			}
+			else
+			{
+				resp.success = 0;
+			}
+		}
+	}
+	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
+	sender_.sendResponse(response);
+}
+
+void ClientSession::handleChatListRequestData(uint32_t messageID, uint32_t sessionID)
+{
+	ChatListResponseData resp;
+	if (userID_ != -1)
+		resp.chats = chatRepo_->getUserChats(userID_);
 	auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
 	sender_.sendResponse(response);
 }
@@ -250,8 +330,7 @@ bool ClientSession::validateIncomingPacket(const PacketHeaderRaw& header, const 
 		MessageSendData data;
 		if (!PacketDeserializer::deserializeData(body, data))
 			return false;
-		return Validator::validateSenderID(data.senderID)
-			&& Validator::validateChatID(data.chatID)
+		return Validator::validateChatID(data.chatID)
 			&& Validator::validateMessage(data.text);
 	}
 	case PacketType::FindUserRequest:
@@ -269,73 +348,6 @@ bool ClientSession::validateIncomingPacket(const PacketHeaderRaw& header, const 
 		return Validator::validateUsername(data.peerUsername);
 	}
 	default:
-		// Пустые пакеты: Connect, Disconnect, там валидировать нечего
 		return true;
 	}
-}
-void ClientSession::handleFindUserRequestData(uint32_t messageID, uint32_t sessionID,
-    const FindUserRequestData& data)
-{
-    if (userID_ == -1)
-    {
-        Logger::instance().warn("FindUserRequest before auth (fd {})", fileDescriptor_);
-        FindUserResponseData resp;
-        auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
-        sender_.sendResponse(response);
-        return;
-    }
-
-    FindUserResponseData resp;
-    resp.usernames = db_->findUsers(data.query, userID_);
-    auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
-    sender_.sendResponse(response);
-    Logger::instance().info("FindUser '{}' from fd {} → {} results",
-        data.query, fileDescriptor_, resp.usernames.size());
-}
-
-void ClientSession::handleCreateChatRequestData(uint32_t messageID, uint32_t sessionID,
-    const CreateChatRequestData& data)
-{
-    CreateChatResponseData resp{};
-    if (userID_ == -1)
-    {
-        resp.success = 0;
-    }
-    else
-    {
-        int peerID = db_->getUserID(data.peerUsername);
-        if (peerID == -1 || peerID == userID_)
-        {
-            resp.success = 0;
-            Logger::instance().warn("CreateChat failed for '{}': peer not found (fd {})",
-                data.peerUsername, fileDescriptor_);
-        }
-        else
-        {
-            int chatID = db_->findOrCreateDirectChat(userID_, peerID);
-            if (chatID > 0)
-            {
-                resp.success = 1;
-                resp.chatID = static_cast<uint32_t>(chatID);
-                resp.peerUsername = data.peerUsername;
-                Logger::instance().info("Chat {} created/found between '{}' and '{}'",
-                    chatID, username_, data.peerUsername);
-            }
-            else
-            {
-                resp.success = 0;
-            }
-        }
-    }
-    auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
-    sender_.sendResponse(response);
-}
-
-void ClientSession::handleChatListRequestData(uint32_t messageID, uint32_t sessionID)
-{
-    ChatListResponseData resp;
-    if (userID_ != -1)
-        resp.chats = db_->getUserChats(userID_);
-    auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
-    sender_.sendResponse(response);
 }
