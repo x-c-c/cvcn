@@ -4,18 +4,14 @@
 #include <cstdint>
 
 class ClientSession;
-class UserRepository;
-class ChatRepository;
-class MessageRepository;
+class PacketDispatcher;
 class SessionRegistry;
 class Epoller;
 
 class SessionManager
 {
 public:
-	SessionManager(UserRepository* userRepo,
-				   ChatRepository* chatRepo,
-				   MessageRepository* msgRepo,
+	SessionManager(PacketDispatcher* dispatcher,
 				   SessionRegistry* sessionRegistry,
 				   Epoller* epoller);
 	~SessionManager();
@@ -26,9 +22,7 @@ public:
 	void onError(int fileDescriptor, uint32_t events);
 
 private:
-	UserRepository* userRepo_;
-	ChatRepository* chatRepo_;
-	MessageRepository* msgRepo_;
+	PacketDispatcher* dispatcher_;
 	SessionRegistry* sessionRegistry_;
 	Epoller* epoller_;
 	std::unordered_map<int, std::unique_ptr<ClientSession>> sessions_;

@@ -1,20 +1,14 @@
 #include "SessionManager.h"
 #include "ClientSession.h"
-#include "Epoller.h"
-#include "UserRepository.h"
-#include "ChatRepository.h"
-#include "MessageRepository.h"
+#include "PacketDispatcher.h"
 #include "SessionRegistry.h"
+#include "Epoller.h"
 #include "Logger.h"
 
-SessionManager::SessionManager(UserRepository* userRepo,
-							   ChatRepository* chatRepo,
-							   MessageRepository* msgRepo,
+SessionManager::SessionManager(PacketDispatcher* dispatcher,
 							   SessionRegistry* sessionRegistry,
 							   Epoller* epoller):
-	userRepo_(userRepo),
-	chatRepo_(chatRepo),
-	msgRepo_(msgRepo),
+	dispatcher_(dispatcher),
 	sessionRegistry_(sessionRegistry),
 	epoller_(epoller){}
 
@@ -23,7 +17,12 @@ SessionManager::~SessionManager()
 	for (auto& pair : sessions_)
 	{
 		if (!pair.second->isClosed())
+		{
+			const int uid = pair.second->getUserID();
+			if (sessionRegistry_ && uid != -1)
+				sessionRegistry_->unregisterUser(uid);
 			pair.second->closeSession();
+		}
 	}
 	sessions_.clear();
 }
@@ -31,7 +30,7 @@ SessionManager::~SessionManager()
 void SessionManager::onNewConnection(int fileDescriptor)
 {
 	sessions_[fileDescriptor] = std::make_unique<ClientSession>(
-		fileDescriptor, epoller_, userRepo_, chatRepo_, msgRepo_, sessionRegistry_);
+		fileDescriptor, epoller_, dispatcher_);
 	Logger::instance().info("New client registered, fd={}", fileDescriptor);
 }
 
@@ -66,6 +65,10 @@ void SessionManager::closeClient(int fileDescriptor)
 	auto it = sessions_.find(fileDescriptor);
 	if (it == sessions_.end())
 		return;
+
+	const int uid = it->second->getUserID();
+	if (sessionRegistry_ && uid != -1)
+		sessionRegistry_->unregisterUser(uid);
 
 	if (!it->second->isClosed())
 		it->second->closeSession();

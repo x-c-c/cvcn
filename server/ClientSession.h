@@ -4,22 +4,17 @@
 #include "ResponseSender.h"
 #include <sys/socket.h>
 #include <string>
+#include <vector>
 
 class Epoller;
-class UserRepository;
-class ChatRepository;
-class MessageRepository;
-class SessionRegistry;
+class PacketDispatcher;
 
 class ClientSession
 {
 public:
 	ClientSession(int fileDescriptor,
 				  Epoller* epoller,
-				  UserRepository* userRepo,
-				  ChatRepository* chatRepo,
-				  MessageRepository* msgRepo,
-				  SessionRegistry* sessionRegistry);
+				  PacketDispatcher* dispatcher);
 	~ClientSession();
 
 	void handleRead();
@@ -31,6 +26,8 @@ public:
 
 	int getUserID() const { return userID_; }
 	const std::string& getUsername() const { return username_; }
+	void setAuthenticated(int userID, const std::string& username);
+
 	void sendRaw(const std::vector<uint8_t>& data) { sender_.sendResponse(data); }
 
 private:
@@ -39,10 +36,7 @@ private:
 	int fileDescriptor_;
 	bool closed_ = false;
 	Epoller* epoller_;
-	UserRepository* userRepo_;
-	ChatRepository* chatRepo_;
-	MessageRepository* msgRepo_;
-	SessionRegistry* sessionRegistry_;
+	PacketDispatcher* dispatcher_;
 	PacketAssembler assembler_;
 	ResponseSender sender_;
 
@@ -50,15 +44,4 @@ private:
 	std::string username_;
 
 	void processPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
-	bool validateIncomingPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
-
-	void handleConnectRequestData(uint32_t messageID, uint32_t sessionID);
-	void handleRegisterRequestData(uint32_t messageID, uint32_t sessionID, const RegisterRequestData& data);
-	void handleAuthRequestData(uint32_t messageID, uint32_t sessionID, const AuthRequestData& data);
-	void handleMessageSendData(uint32_t messageID, uint32_t sessionID, const MessageSendData& data);
-	void handleDisconnectRequestData();
-	void handleDeleteRequestData(uint32_t messageID, uint32_t sessionID, const DeleteRequestData& data);
-	void handleFindUserRequestData(uint32_t messageID, uint32_t sessionID, const FindUserRequestData& data);
-	void handleCreateChatRequestData(uint32_t messageID, uint32_t sessionID, const CreateChatRequestData& data);
-	void handleChatListRequestData(uint32_t messageID, uint32_t sessionID);
 };

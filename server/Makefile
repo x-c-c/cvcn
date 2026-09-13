@@ -26,7 +26,12 @@ SRCS := \
 	Validator.cpp \
 	UserRepository.cpp \
 	ChatRepository.cpp \
-	MessageRepository.cpp
+	MessageRepository.cpp \
+	AuthService.cpp \
+	ChatService.cpp \
+	MessageService.cpp \
+	PacketDispatcher.cpp
+
 
 OBJS := $(addprefix $(BUILD_DIR)/,$(SRCS:.cpp=.o))
 
@@ -51,7 +56,11 @@ HEADERS := \
 	Validator.h \
 	UserRepository.h \
 	ChatRepository.h \
-	MessageRepository.h
+	MessageRepository.h \
+	AuthService.h \
+	ChatService.h \
+	MessageService.h \
+	PacketDispatcher.h
 
 .PHONY: all clean rebuild run
 
