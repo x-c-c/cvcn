@@ -9,6 +9,7 @@ class Epoller;
 class UserRepository;
 class ChatRepository;
 class MessageRepository;
+class SessionRegistry;
 
 class ClientSession
 {
@@ -17,7 +18,8 @@ public:
 				  Epoller* epoller,
 				  UserRepository* userRepo,
 				  ChatRepository* chatRepo,
-				  MessageRepository* msgRepo);
+				  MessageRepository* msgRepo,
+				  SessionRegistry* sessionRegistry);
 	~ClientSession();
 
 	void handleRead();
@@ -40,6 +42,7 @@ private:
 	UserRepository* userRepo_;
 	ChatRepository* chatRepo_;
 	MessageRepository* msgRepo_;
+	SessionRegistry* sessionRegistry_;
 	PacketAssembler assembler_;
 	ResponseSender sender_;
 

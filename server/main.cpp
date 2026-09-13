@@ -7,6 +7,7 @@
 #include "UserRepository.h"
 #include "ChatRepository.h"
 #include "MessageRepository.h"
+#include "SessionRegistry.h"
 #include "Epoller.h"
 #include "SessionManager.h"
 
@@ -19,6 +20,7 @@ int main()
 	UserRepository userRepo(db.getHandle());
 	ChatRepository chatRepo(db.getHandle());
 	MessageRepository msgRepo(db.getHandle());
+	SessionRegistry sessionRegistry;
 
 	ServerConfig config;
 	const int chosenPort = getValidPort(config.getPort());
@@ -33,7 +35,7 @@ int main()
 	server.start(config);
 
 	Epoller epoller;
-	SessionManager sessionManager(&userRepo, &chatRepo, &msgRepo, &epoller);
+	SessionManager sessionManager(&userRepo, &chatRepo, &msgRepo, &sessionRegistry, &epoller);
 
 	epoller.setNewConnectionCallback([&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
 	epoller.setReadEventCallback   ([&sessionManager](int fd){ sessionManager.onRead(fd); });

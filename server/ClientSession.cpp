@@ -7,6 +7,7 @@
 #include "UserRepository.h"
 #include "ChatRepository.h"
 #include "MessageRepository.h"
+#include "SessionRegistry.h"
 #include <cstring>
 #include <cerrno>
 #include <unistd.h>
@@ -15,12 +16,14 @@ ClientSession::ClientSession(int fileDescriptor,
 							 Epoller* epoller,
 							 UserRepository* userRepo,
 							 ChatRepository* chatRepo,
-							 MessageRepository* msgRepo):
+							 MessageRepository* msgRepo,
+							 SessionRegistry* sessionRegistry):
 	fileDescriptor_(fileDescriptor),
 	epoller_(epoller),
 	userRepo_(userRepo),
 	chatRepo_(chatRepo),
 	msgRepo_(msgRepo),
+	sessionRegistry_(sessionRegistry),
 	sender_(epoller, fileDescriptor){}
 
 ClientSession::~ClientSession()
@@ -180,6 +183,10 @@ void ClientSession::handleAuthRequestData(uint32_t messageID, uint32_t sessionID
 	{
 		userID_ = userRepo_->getUserID(data.username);
 		username_ = data.username;
+
+		if (sessionRegistry_)
+			sessionRegistry_->registerUser(userID_, this);
+
 		Logger::instance().info("Auth OK for '{}' (fd {}, uid {})",
 			data.username, fileDescriptor_, userID_);
 	}
@@ -294,6 +301,10 @@ void ClientSession::closeSession()
 {
 	if (closed_)
 		return;
+
+	if (sessionRegistry_ && userID_ != -1)
+		sessionRegistry_->unregisterUser(userID_);
+
 	epoller_->removeFdFromEpoll(fileDescriptor_);
 	close(fileDescriptor_);
 	closed_ = true;
