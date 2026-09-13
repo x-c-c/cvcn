@@ -9,7 +9,7 @@ class EventPoller;
 class PacketSender
 {
 public:
-	PacketSender(EventPoller* epoller, int socketDescriptor);
+	PacketSender(EventPoller* eventPoller, int fileDescriptor);
 
 	/** @brief Поставить пакет в очередь и попробовать отправить. */
 	void sendPacket(const std::vector<uint8_t>& data);

@@ -65,7 +65,6 @@ struct MessageSendData
 
 struct MessageReceiveData
 {
-    uint32_t senderID;          ///< ID отправителя
     std::string senderUsername; ///< Имя отправителя, чтобы клиент не делал доп. запросов
     uint32_t chatID;
     std::string text;

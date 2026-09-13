@@ -13,7 +13,7 @@ class SessionManager
 public:
 	SessionManager(PacketDispatcher* dispatcher,
 				   SessionRegistry* sessionRegistry,
-				   EventPoller* epoller);
+				   EventPoller* eventPoller);
 	~SessionManager();
 
 	void onNewConnection(int fileDescriptor);

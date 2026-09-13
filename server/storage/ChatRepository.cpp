@@ -14,7 +14,7 @@ std::vector<std::string> ChatRepository::findUsers(const std::string& query, int
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
 	{
-		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		LOG_ERROR("prepare failed: {}", sqlite3_errmsg(db_));
 		return result;
 	}
 
@@ -45,7 +45,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(db_, findSql, -1, &stmt, nullptr) != SQLITE_OK)
 	{
-		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		LOG_ERROR("prepare failed: {}", sqlite3_errmsg(db_));
 		return -1;
 	}
 	sqlite3_bind_int(stmt, 1, user1ID);
@@ -62,7 +62,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 	char* errMsg = nullptr;
 	if (sqlite3_exec(db_, "BEGIN", nullptr, nullptr, &errMsg) != SQLITE_OK)
 	{
-		Logger::instance().error("BEGIN failed: {}", errMsg ? errMsg : "unknown");
+		LOG_ERROR("BEGIN failed: {}", errMsg ? errMsg : "unknown");
 		if (errMsg) sqlite3_free(errMsg);
 		return -1;
 	}
@@ -70,7 +70,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 	const char* insertChat = "INSERT INTO chats (is_group, name) VALUES (0, NULL)";
 	if (sqlite3_exec(db_, insertChat, nullptr, nullptr, &errMsg) != SQLITE_OK)
 	{
-		Logger::instance().error("insert chat failed: {}", errMsg ? errMsg : "unknown");
+		LOG_ERROR("insert chat failed: {}", errMsg ? errMsg : "unknown");
 		if (errMsg) sqlite3_free(errMsg);
 		sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);
 		return -1;
@@ -83,7 +83,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 		sqlite3_stmt* ms = nullptr;
 		if (sqlite3_prepare_v2(db_, insertMember, -1, &ms, nullptr) != SQLITE_OK)
 		{
-			Logger::instance().error("prepare insert member failed: {}", sqlite3_errmsg(db_));
+			LOG_ERROR("prepare insert member failed: {}", sqlite3_errmsg(db_));
 			sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);
 			return -1;
 		}
@@ -91,7 +91,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 		sqlite3_bind_int(ms, 2, userID);
 		if (sqlite3_step(ms) != SQLITE_DONE)
 		{
-			Logger::instance().error("insert member failed: {}", sqlite3_errmsg(db_));
+			LOG_ERROR("insert member failed: {}", sqlite3_errmsg(db_));
 			sqlite3_finalize(ms);
 			sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);
 			return -1;
@@ -101,7 +101,7 @@ int ChatRepository::findOrCreateDirectChat(int user1ID, int user2ID)
 
 	if (sqlite3_exec(db_, "COMMIT", nullptr, nullptr, &errMsg) != SQLITE_OK)
 	{
-		Logger::instance().error("COMMIT failed: {}", errMsg ? errMsg : "unknown");
+		LOG_ERROR("COMMIT failed: {}", errMsg ? errMsg : "unknown");
 		if (errMsg) sqlite3_free(errMsg);
 		sqlite3_exec(db_, "ROLLBACK", nullptr, nullptr, nullptr);
 		return -1;
@@ -124,7 +124,7 @@ std::vector<ChatListEntry> ChatRepository::getUserChats(int userID)
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
 	{
-		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		LOG_ERROR("prepare failed: {}", sqlite3_errmsg(db_));
 		return result;
 	}
 	sqlite3_bind_int(stmt, 1, userID);
@@ -150,7 +150,7 @@ std::vector<int> ChatRepository::getChatMemberIDs(uint32_t chatID)
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
 	{
-		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		LOG_ERROR("prepare failed: {}", sqlite3_errmsg(db_));
 		return result;
 	}
 	sqlite3_bind_int(stmt, 1, static_cast<int>(chatID));

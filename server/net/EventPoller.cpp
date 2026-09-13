@@ -39,7 +39,7 @@ void EventPoller::addFileDescriptor(int fileDescriptor, uint32_t events)
 	event.events = events;
 	if (epoll_ctl(epollFD_, EPOLL_CTL_ADD, fileDescriptor, &event) == -1)
 	{
-		Logger::instance().error("epoll_ctl ADD failed for fd {}: {}", fileDescriptor, strerror(errno));
+		LOG_ERROR("epoll_ctl ADD failed for fd {}: {}", fileDescriptor, strerror(errno));
 	}
 }
 
@@ -55,7 +55,7 @@ void EventPoller::modifyFileDescriptorEvents(int fileDescriptor, uint32_t events
 	event.events = events;
 	if (epoll_ctl(epollFD_, EPOLL_CTL_MOD, fileDescriptor, &event) == -1)
 	{
-		Logger::instance().error("epoll_ctl MOD failed for fd {}: {}", fileDescriptor, strerror(errno));
+		LOG_ERROR("epoll_ctl MOD failed for fd {}: {}", fileDescriptor, strerror(errno));
 	}
 }
 
@@ -64,7 +64,7 @@ void EventPoller::startEventLoop(int serverFileDescriptor)
 	int flags = fcntl(serverFileDescriptor, F_GETFL, 0);
 	if (flags == -1 || fcntl(serverFileDescriptor, F_SETFL, flags | O_NONBLOCK) == -1)
 	{
-		Logger::instance().critical("fcntl O_NONBLOCK on server fd failed: {}", strerror(errno));
+		LOG_CRITICAL("fcntl O_NONBLOCK on server fd failed: {}", strerror(errno));
 		return;
 	}
 	addFileDescriptor(serverFileDescriptor, EPOLLIN);
@@ -78,7 +78,7 @@ void EventPoller::startEventLoop(int serverFileDescriptor)
 		{
 			if (errno == EINTR)
 				continue;
-			Logger::instance().critical("epoll_wait failed: {}", strerror(errno));
+			LOG_CRITICAL("epoll_wait failed: {}", strerror(errno));
 			running_ = false;
 			break;
 		}
@@ -92,7 +92,7 @@ void EventPoller::startEventLoop(int serverFileDescriptor)
 			{
 				if (fileDescriptor == serverFileDescriptor)
 				{
-					Logger::instance().critical("Critical error on server socket (fd {}), stopping", serverFileDescriptor);
+					LOG_CRITICAL("Critical error on server socket (fd {}), stopping", serverFileDescriptor);
 					running_ = false;
 					break;
 				}
@@ -109,14 +109,14 @@ void EventPoller::startEventLoop(int serverFileDescriptor)
 					if (clientFileDescriptor < 0)
 					{
 						if (errno != EAGAIN && errno != EWOULDBLOCK)
-							Logger::instance().error("accept() failed: {}", strerror(errno));
+							LOG_ERROR("accept() failed: {}", strerror(errno));
 					}
 					else
 					{
 						int cflags = fcntl(clientFileDescriptor, F_GETFL, 0);
 						if (cflags == -1 || fcntl(clientFileDescriptor, F_SETFL, cflags | O_NONBLOCK) == -1)
 						{
-							Logger::instance().error("fcntl O_NONBLOCK on client fd {} failed: {}", clientFileDescriptor, strerror(errno));
+							LOG_ERROR("fcntl O_NONBLOCK on client fd {} failed: {}", clientFileDescriptor, strerror(errno));
 							close(clientFileDescriptor);
 						}
 						else

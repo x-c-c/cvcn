@@ -23,7 +23,7 @@ bool Database::executeSql(const char* sql, const char* context)
 	const int rc = sqlite3_exec(db_, sql, nullptr, nullptr, &errMsg);
 	if (rc != SQLITE_OK)
 	{
-		Logger::instance().error("SQL error ({}): {}", context, errMsg ? errMsg : "unknown");
+		LOG_ERROR("SQL error ({}): {}", context, errMsg ? errMsg : "unknown");
 		if (errMsg)
 			sqlite3_free(errMsg);
 		return false;
@@ -36,7 +36,7 @@ bool Database::open(const std::string& dbPath)
 	const int rc = sqlite3_open(dbPath.c_str(), &db_);
 	if (rc != SQLITE_OK)
 	{
-		Logger::instance().error("Cannot open database: {}", sqlite3_errmsg(db_));
+		LOG_ERROR("Cannot open database: {}", sqlite3_errmsg(db_));
 		return false;
 	}
 

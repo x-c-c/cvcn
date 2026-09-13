@@ -35,19 +35,19 @@ int promptForPort(int defaultPort)
 		std::cout << "Input port (1..65535, Enter for default " << defaultPort << "): ";
 		if (!std::getline(std::cin, line))
 		{
-			Logger::instance().error("Input error, exiting: {}", strerror(errno));
+			LOG_ERROR("Input error, exiting: {}", strerror(errno));
 			exit(1);
 		}
 		if (line.empty())
 		{
 			if (isPortFree(defaultPort))
 			{
-				Logger::instance().info("Selected default port {}", defaultPort);
+				LOG_INFO("Selected default port {}", defaultPort);
 				return defaultPort;
 			}
 			else
 			{
-				Logger::instance().error("Default port {} is already in use: {}", defaultPort, strerror(errno));
+				LOG_ERROR("Default port {} is already in use: {}", defaultPort, strerror(errno));
 				continue;
 			}
 		}
@@ -57,26 +57,26 @@ int promptForPort(int defaultPort)
 			int port = std::stoi(line);
 			if (port < 1 || port > 65535)
 			{
-				Logger::instance().error("Port {} out of range (1...65535): {}", port, strerror(errno));
+				LOG_ERROR("Port {} out of range (1...65535): {}", port, strerror(errno));
 				continue;
 			}
 			if (isPortFree(port))
 			{
-				Logger::instance().info("Selected port {}", port);
+				LOG_INFO("Selected port {}", port);
 				return port;
 			}
 			else
 			{
-				Logger::instance().error("Port {} is already in use: {}", port, strerror(errno));
+				LOG_ERROR("Port {} is already in use: {}", port, strerror(errno));
 			}
 		}
 		catch (const std::invalid_argument&)
 		{
-			Logger::instance().error("Invalid port number entered: '{}'", line);
+			LOG_ERROR("Invalid port number entered: '{}'", line);
 		}
 		catch (const std::out_of_range&)
 		{
-			Logger::instance().error("Port number out of integer range: '{}'", line);
+			LOG_ERROR("Port number out of integer range: '{}'", line);
 		}
 	}
 	return -1;

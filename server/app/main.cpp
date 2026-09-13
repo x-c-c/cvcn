@@ -18,7 +18,7 @@
 int main()
 {
 	ShutdownSignal::setup();
-	Logger::instance().info("Server starting up");
+	LOG_INFO("Server starting up");
 
 	Database db("chat.db");
 	UserRepository userRepository(db.getHandle());
@@ -36,7 +36,7 @@ int main()
 	const int chosenPort = promptForPort(config.getPort());
 	if (chosenPort == -1)
 	{
-		Logger::instance().info("Shutdown requested during port selection");
+		LOG_INFO("Shutdown requested during port selection");
 		return 0;
 	}
 	config.setPort(chosenPort);
@@ -54,6 +54,6 @@ int main()
 
 	eventPoller.startEventLoop(listener.fileDescriptor());
 
-	Logger::instance().info("Server shutdown");
+	LOG_INFO("Server shutdown");
 	return 0;
 }

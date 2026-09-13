@@ -22,7 +22,7 @@ public:
 
 private:
 	int serverFileDescriptor_ = -1;
-	sockaddr_in serverAddr_{};
+	sockaddr_in serverAddress_{};
 	static constexpr int reuseAddrOption = 1;
 
 	void setupServerAddress(const ServerConfig& config);

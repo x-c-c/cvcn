@@ -7,12 +7,12 @@
 #include <unistd.h>
 
 ClientSession::ClientSession(int fileDescriptor,
-							 EventPoller* epoller,
+							 EventPoller* eventPoller,
 							 PacketDispatcher* dispatcher):
 	fileDescriptor_(fileDescriptor),
-	eventPoller_(epoller),
+	eventPoller_(eventPoller),
 	dispatcher_(dispatcher),
-	sender_(epoller, fileDescriptor){}
+	sender_(eventPoller, fileDescriptor){}
 
 ClientSession::~ClientSession()
 {
@@ -38,12 +38,12 @@ void ClientSession::handleRead()
 	}
 	else if (bytesRead == 0)
 	{
-		Logger::instance().info("Client {} closed connection", fileDescriptor_);
+		LOG_INFO("Client {} closed connection", fileDescriptor_);
 		closeSession();
 	}
 	else if (errno != EAGAIN && errno != EWOULDBLOCK)
 	{
-		Logger::instance().error("recv error on fd {}: {}", fileDescriptor_, strerror(errno));
+		LOG_ERROR("recv error on fd {}: {}", fileDescriptor_, strerror(errno));
 		closeSession();
 	}
 }
@@ -72,5 +72,5 @@ void ClientSession::closeSession()
 	eventPoller_->removeFileDescriptor(fileDescriptor_);
 	close(fileDescriptor_);
 	closed_ = true;
-	Logger::instance().info("Session closed for fd {}", fileDescriptor_);
+	LOG_INFO("Session closed for fd {}", fileDescriptor_);
 }

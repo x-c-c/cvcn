@@ -22,18 +22,17 @@ void MessageService::handleMessageSend(const PacketHeaderRaw& header,
 	const int senderID = session.getUserID();
 	if (senderID == -1)
 	{
-		Logger::instance().warn("MessageSend before auth (fd {})", session.getFileDescriptor());
+		LOG_WARN("MessageSend before auth (fd {})", session.getFileDescriptor());
 		return;
 	}
 
 	if (!messageRepository_->saveMessage(data.chatID, senderID, data.text))
 	{
-		Logger::instance().error("Failed to save message from '{}' (userID {}) in chat {}",
+		LOG_ERROR("Failed to save message from '{}' (userID {}) in chat {}",
 			session.getUsername(), senderID, data.chatID);
 	}
 
 	MessageReceiveData payload;
-	payload.senderID       = static_cast<uint32_t>(senderID);
 	payload.senderUsername = session.getUsername();
 	payload.chatID         = data.chatID;
 	payload.text           = data.text;
@@ -41,7 +40,7 @@ void MessageService::handleMessageSend(const PacketHeaderRaw& header,
 	const std::vector<int> members = chatRepository_->getChatMemberIDs(data.chatID);
 	broadcastToChat(members, senderID, payload);
 
-	Logger::instance().info("Message from '{}' (userID {}) to chat {}: '{}' (recipients: {})",
+	LOG_INFO("Message from '{}' (userID {}) to chat {}: '{}' (recipients: {})",
 		session.getUsername(), senderID, data.chatID, data.text, members.size() - 1);
 }
 
@@ -66,7 +65,7 @@ void MessageService::broadcastToChat(const std::vector<int>& memberIDs,
 			continue;   // получатель не в сети, сообщение останется в БД
 
 		recipient->sendRaw(packet);
-		Logger::instance().info("MessageReceive pushed to '{}' (userID {})",
+		LOG_INFO("MessageReceive pushed to '{}' (userID {})",
 			recipient->getUsername(), userID);
 	}
 }

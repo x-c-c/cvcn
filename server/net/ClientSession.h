@@ -13,7 +13,7 @@ class ClientSession
 {
 public:
 	ClientSession(int fileDescriptor,
-				  EventPoller* epoller,
+				  EventPoller* eventPoller,
 				  PacketDispatcher* dispatcher);
 	~ClientSession();
 

@@ -16,7 +16,7 @@ void ChatService::handleFindUserRequest(const PacketHeaderRaw& header,
 	const int userID = session.getUserID();
 	if (userID == -1)
 	{
-		Logger::instance().warn("FindUserRequest before auth (fd {})", session.getFileDescriptor());
+		LOG_WARN("FindUserRequest before auth (fd {})", session.getFileDescriptor());
 		FindUserResponseData resp;
 		session.sendRaw(PacketBuilder::buildPacket(header.messageID, header.sessionID, resp));
 		return;
@@ -25,7 +25,7 @@ void ChatService::handleFindUserRequest(const PacketHeaderRaw& header,
 	FindUserResponseData resp;
 	resp.usernames = chatRepository_->findUsers(data.query, userID);
 	session.sendRaw(PacketBuilder::buildPacket(header.messageID, header.sessionID, resp));
-	Logger::instance().info("FindUser '{}' from fd {} → {} results",
+	LOG_INFO("FindUser '{}' from fd {} → {} results",
 		data.query, session.getFileDescriptor(), resp.usernames.size());
 }
 
@@ -38,15 +38,15 @@ void ChatService::handleCreateChatRequest(const PacketHeaderRaw& header,
 
 	if (userID == -1)
 	{
-		resp.success = 0;
+		resp.success = false;
 	}
 	else
 	{
 		const int peerID = userRepository_->getUserID(data.peerUsername);
 		if (peerID == -1 || peerID == userID)
 		{
-			resp.success = 0;
-			Logger::instance().warn("CreateChat failed for '{}': peer not found (fd {})",
+			resp.success = false;
+			LOG_WARN("CreateChat failed for '{}': peer not found (fd {})",
 				data.peerUsername, session.getFileDescriptor());
 		}
 		else
@@ -54,15 +54,15 @@ void ChatService::handleCreateChatRequest(const PacketHeaderRaw& header,
 			const int chatID = chatRepository_->findOrCreateDirectChat(userID, peerID);
 			if (chatID > 0)
 			{
-				resp.success = 1;
+				resp.success = true;
 				resp.chatID = static_cast<uint32_t>(chatID);
 				resp.peerUsername = data.peerUsername;
-				Logger::instance().info("Chat {} created/found between '{}' and '{}'",
+				LOG_INFO("Chat {} created/found between '{}' and '{}'",
 					chatID, session.getUsername(), data.peerUsername);
 			}
 			else
 			{
-				resp.success = 0;
+				resp.success = false;
 			}
 		}
 	}

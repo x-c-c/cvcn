@@ -9,7 +9,7 @@ bool MessageRepository::saveMessage(uint32_t chatID, int senderID, const std::st
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK)
 	{
-		Logger::instance().error("prepare failed: {}", sqlite3_errmsg(db_));
+		LOG_ERROR("prepare failed: {}", sqlite3_errmsg(db_));
 		return false;
 	}
 	sqlite3_bind_int(stmt,  1, static_cast<int>(chatID));
@@ -20,7 +20,7 @@ bool MessageRepository::saveMessage(uint32_t chatID, int senderID, const std::st
 	sqlite3_finalize(stmt);
 	if (rc != SQLITE_DONE)
 	{
-		Logger::instance().error("Failed to save message (chat {}): {}", chatID, sqlite3_errmsg(db_));
+		LOG_ERROR("Failed to save message (chat {}): {}", chatID, sqlite3_errmsg(db_));
 		return false;
 	}
 	return true;

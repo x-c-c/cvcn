@@ -4,9 +4,9 @@
 #include <cerrno>
 #include <unistd.h>
 
-PacketSender::PacketSender(EventPoller* epoller, int socketDescriptor):
-	eventPoller_(epoller),
-	fileDescriptor_(socketDescriptor){}
+PacketSender::PacketSender(EventPoller* eventPoller, int fileDescriptor):
+	eventPoller_(eventPoller),
+	fileDescriptor_(fileDescriptor){}
 
 void PacketSender::armWriteNotification()
 {
@@ -30,7 +30,7 @@ void PacketSender::flushSendQueue()
 				armWriteNotification();
 				return;
 			}
-			Logger::instance().error("send error on fd {}: {}", fileDescriptor_, strerror(errno));
+			LOG_ERROR("send error on fd {}: {}", fileDescriptor_, strerror(errno));
 			return;
 		}
 

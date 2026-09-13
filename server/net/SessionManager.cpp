@@ -7,10 +7,10 @@
 
 SessionManager::SessionManager(PacketDispatcher* dispatcher,
 							   SessionRegistry* sessionRegistry,
-							   EventPoller* epoller):
+							   EventPoller* eventPoller):
 	dispatcher_(dispatcher),
 	sessionRegistry_(sessionRegistry),
-	eventPoller_(epoller){}
+	eventPoller_(eventPoller){}
 
 SessionManager::~SessionManager()
 {
@@ -31,7 +31,7 @@ void SessionManager::onNewConnection(int fileDescriptor)
 {
 	sessions_[fileDescriptor] = std::make_unique<ClientSession>(
 		fileDescriptor, eventPoller_, dispatcher_);
-	Logger::instance().info("New client registered, fd={}", fileDescriptor);
+	LOG_INFO("New client registered, fd={}", fileDescriptor);
 }
 
 void SessionManager::onRead(int fileDescriptor)
@@ -56,7 +56,7 @@ void SessionManager::onWrite(int fileDescriptor)
 
 void SessionManager::onError(int fileDescriptor, uint32_t events)
 {
-	Logger::instance().warn("Error event on fd {} (events=0x{:X})", fileDescriptor, events);
+	LOG_WARN("Error event on fd {} (events=0x{:X})", fileDescriptor, events);
 	closeClient(fileDescriptor);
 }
 
