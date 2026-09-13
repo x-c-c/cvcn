@@ -27,24 +27,24 @@ public:
     void sendChatListRequest();
 
 signals:
-    void connected();
-    void disconnected();
-    void registrationFinished(bool success);
-    void authFinished(bool success, uint32_t sessionID);
-    void deleteFinished(bool success);
-    void errorOccurred(const QString& errorString);
-    void usersFound(const std::vector<std::string>& usernames);
-    void chatCreated(bool success, uint32_t chatID, const QString& peerUsername);
-    void chatListReceived(const std::vector<ChatListEntry>& chats);
-    void messageReceived(const QString& senderUsername,
+    void signalConnected();
+    void signalDisconnected();
+    void signalRegistrationFinished(bool success);
+    void signalAuthFinished(bool success, uint32_t sessionID);
+    void signalDeleteFinished(bool success);
+    void signalErrorOccurred(const QString& errorString);
+    void signalUsersFound(const std::vector<std::string>& usernames);
+    void signalChatCreated(bool success, uint32_t chatID, const QString& peerUsername);
+    void signalChatListReceived(const std::vector<ChatListEntry>& chats);
+    void signalMessageReceived(const QString& senderUsername,
                          uint32_t chatID,
                          const QString& text);
 
 private slots:
-    void onConnected();
-    void onDisconnected();
-    void onErrorOccurred(const QString& errorString);
-    void onRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
+    void slotConnected();
+    void slotDisconnected();
+    void slotErrorOccurred(const QString& errorString);
+    void slotRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 
 private:
     Connection* connection_;

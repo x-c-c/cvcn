@@ -19,7 +19,7 @@ void Connection::send(const std::vector<uint8_t>& packet)
 {
     if (socket_->state() != QAbstractSocket::ConnectedState)
     {
-        emit errorOccurred(QStringLiteral("Not connected to server"));
+        emit signalErrorOccurred(QStringLiteral("Not connected to server"));
         return;
     }
 
@@ -29,7 +29,7 @@ void Connection::send(const std::vector<uint8_t>& packet)
 
     const qint64 bytesWritten = socket_->write(data);
     if (bytesWritten == -1)
-        emit errorOccurred(socket_->errorString());
+        emit signalErrorOccurred(socket_->errorString());
 }
 
 bool Connection::isConnected() const
@@ -39,18 +39,18 @@ bool Connection::isConnected() const
 
 void Connection::slotConnected()
 {
-    emit connected();
+    emit signalConnected();
 }
 
 void Connection::slotDisconnected()
 {
-    emit disconnected();
+    emit signalDisconnected();
 }
 
 void Connection::slotSocketError(QAbstractSocket::SocketError error)
 {
     Q_UNUSED(error);
-    emit errorOccurred(socket_->errorString());
+    emit signalErrorOccurred(socket_->errorString());
 }
 
 void Connection::slotReadyRead()
@@ -74,6 +74,6 @@ void Connection::slotReadyRead()
 
         receiveBuffer_.erase(receiveBuffer_.begin(), receiveBuffer_.begin() + totalSize);
 
-        emit rawPacketReceived(header, body);
+        emit signalRawPacketReceived(header, body);
     }
 }

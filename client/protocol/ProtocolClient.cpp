@@ -8,10 +8,10 @@
 ProtocolClient::ProtocolClient(QObject* parent):
     QObject(parent), connection_(new Connection(this))
 {
-    connect(connection_, &Connection::connected,         this, &ProtocolClient::onConnected);
-    connect(connection_, &Connection::disconnected,      this, &ProtocolClient::onDisconnected);
-    connect(connection_, &Connection::errorOccurred,     this, &ProtocolClient::onErrorOccurred);
-    connect(connection_, &Connection::rawPacketReceived, this, &ProtocolClient::onRawPacketReceived);
+    connect(connection_, &Connection::signalConnected,         this, &ProtocolClient::slotConnected);
+    connect(connection_, &Connection::signalDisconnected,      this, &ProtocolClient::slotDisconnected);
+    connect(connection_, &Connection::signalErrorOccurred,     this, &ProtocolClient::slotErrorOccurred);
+    connect(connection_, &Connection::signalRawPacketReceived, this, &ProtocolClient::slotRawPacketReceived);
 }
 
 void ProtocolClient::connectToServer(const QString& address, quint16 port)
@@ -19,25 +19,25 @@ void ProtocolClient::connectToServer(const QString& address, quint16 port)
     connection_->connectToServer(address, port);
 }
 
-void ProtocolClient::onConnected()
+void ProtocolClient::slotConnected()
 {
     LOG_INFO("connected");
-    emit connected();
+    emit signalConnected();
 }
 
-void ProtocolClient::onDisconnected()
+void ProtocolClient::slotDisconnected()
 {
     LOG_INFO("disconnected");
-    emit disconnected();
+    emit signalDisconnected();
 }
 
-void ProtocolClient::onErrorOccurred(const QString& errorString)
+void ProtocolClient::slotErrorOccurred(const QString& errorString)
 {
     LOG_ERROR("{}", errorString.toStdString());
-    emit errorOccurred(errorString);
+    emit signalErrorOccurred(errorString);
 }
 
-void ProtocolClient::onRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
+void ProtocolClient::slotRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
 {
     processIncomingPacket(header, body);
 }
@@ -50,7 +50,7 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
     {
         RegisterResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit registrationFinished(resp.success == 1);
+            emit signalRegistrationFinished(resp.success == 1);
         break;
     }
     case PacketType::AuthResponse:
@@ -61,7 +61,7 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
             const bool success = (resp.success == 1);
             if (success)
                 sessionID_ = header.sessionID;
-            emit authFinished(success, sessionID_);
+            emit signalAuthFinished(success, sessionID_);
         }
         break;
     }
@@ -69,28 +69,28 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
     {
         DeleteResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit deleteFinished(resp.success == 1);
+            emit signalDeleteFinished(resp.success == 1);
         break;
     }
     case PacketType::FindUserResponse:
     {
         FindUserResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit usersFound(resp.usernames);
+            emit signalUsersFound(resp.usernames);
         break;
     }
     case PacketType::CreateChatResponse:
     {
         CreateChatResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit chatCreated(resp.success == 1, resp.chatID, QString::fromStdString(resp.peerUsername));
+            emit signalChatCreated(resp.success == 1, resp.chatID, QString::fromStdString(resp.peerUsername));
         break;
     }
     case PacketType::ChatListResponse:
     {
         ChatListResponseData resp{};
         if (PacketParser::parseData(body, resp))
-            emit chatListReceived(resp.chats);
+            emit signalChatListReceived(resp.chats);
         break;
     }
     case PacketType::MessageReceive:
@@ -98,7 +98,7 @@ void ProtocolClient::processIncomingPacket(const PacketHeaderRaw& header, const 
         MessageReceiveData recv{};
         if (PacketParser::parseData(body, recv))
         {
-            emit messageReceived(
+            emit signalMessageReceived(
                 QString::fromStdString(recv.senderUsername),
                 recv.chatID,
                 QString::fromStdString(recv.text));

@@ -16,10 +16,10 @@ public:
     bool isConnected() const;
 
 signals:
-    void connected();
-    void disconnected();
-    void errorOccurred(const QString& errorString);
-    void rawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
+    void signalConnected();
+    void signalDisconnected();
+    void signalErrorOccurred(const QString& errorString);
+    void signalRawPacketReceived(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 
 private slots:
     void slotConnected();

@@ -8,12 +8,12 @@ class MainController : public QObject
 {
     Q_OBJECT
 public:
-    MainController(ProtocolClient& protocolClient, AccountDialog& view, ChatWindow& chatWindow);
+    MainController(ProtocolClient& protocolClient, AccountDialog& accountDialog, ChatWindow& chatWindow);
     void connectToServer(const QString& host, quint16 port);
 
 private:
     ProtocolClient& protocolClient_;
-    AccountDialog& view_;
+    AccountDialog& accountDialog_;
     ChatWindow& chatWindow_;
     QString currentUsername_;
 
@@ -25,16 +25,16 @@ private slots:
     void slotFindUserRequested(const QString& query);
     void slotCreateChatRequested(const QString& peerUsername);
     void slotChatSelected(uint32_t chatID);
-    void onUsersFound(const std::vector<std::string>& usernames);
-    void onChatCreated(bool success, uint32_t chatID, const QString& peerUsername);
-    void onChatListReceived(const std::vector<ChatListEntry>& chats);
+    void slotUsersFound(const std::vector<std::string>& usernames);
+    void slotChatCreated(bool success, uint32_t chatID, const QString& peerUsername);
+    void slotChatListReceived(const std::vector<ChatListEntry>& chats);
 
-    void onRegistrationFinished(bool success);
-    void onAuthFinished(bool success, uint32_t sessionID);
-    void onDeleteFinished(bool success);
-    void onError(const QString& errorString);
+    void slotRegistrationFinished(bool success);
+    void slotAuthFinished(bool success, uint32_t sessionID);
+    void slotDeleteFinished(bool success);
+    void slotError(const QString& errorString);
 
-    void onMessageReceived(const QString& senderUsername,
+    void slotMessageReceived(const QString& senderUsername,
                            uint32_t chatID,
                            const QString& text);
 };

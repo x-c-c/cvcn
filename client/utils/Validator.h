@@ -27,8 +27,6 @@ public:
     // Текст сообщения: печатные ASCII + табуляция + перевод строки
     static bool validateMessage(const std::string& message);
 
-    // Идентификаторы
-    static bool validateSenderID(uint32_t senderID);
     static bool validateChatID(uint32_t chatID);
 
 private:
