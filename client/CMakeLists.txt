@@ -27,6 +27,14 @@ set(PROJECT_SOURCES
     net/Connection.cpp
     net/Connection.h
 
+    logic/AppState.h
+    logic/Session.h
+    logic/AuthController.cpp
+    logic/AuthController.h
+    logic/ChatController.cpp
+    logic/ChatController.h
+    logic/MessageController.cpp
+    logic/MessageController.h
     logic/MainController.cpp
     logic/MainController.h
 
