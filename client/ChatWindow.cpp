@@ -95,7 +95,11 @@ void ChatWindow::addChat(uint32_t chatID, const QString& peerUsername)
     ui->chatsListWidget->addItem(item);
 }
 
-
+void ChatWindow::appendIncomingMessage(uint32_t chatID, const QString& sender, const QString& text)
+{
+    if (chatID == currentChatID_)
+        appendMessageInHistory(sender, text);
+}
 
 
 

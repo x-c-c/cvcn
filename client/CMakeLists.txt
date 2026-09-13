@@ -14,31 +14,44 @@ find_package(spdlog REQUIRED)
 
 set(PROJECT_SOURCES
     main.cpp
+
     AccountDialog.cpp
     AccountDialog.h
     AccountDialog.ui
+
+    ChatWindow.cpp
+    ChatWindow.h
+    ChatWindow.ui
+
+    Connection.cpp
+    Connection.h
+
     Model.cpp
     Model.h
+
     Controller.cpp
     Controller.h
+
     Logger.cpp
     Logger.h
-    ByteWriter.cpp
-    ByteWriter.h
+
+    Validator.cpp
+    Validator.h
+
     ByteReader.cpp
     ByteReader.h
+    ByteWriter.cpp
+    ByteWriter.h
+
     PacketBuilder.cpp
     PacketBuilder.h
     PacketDeserializer.cpp
     PacketDeserializer.h
     PacketData.h
-
 )
 
-add_executable(client ${PROJECT_SOURCES}
-    Validator.h Validator.cpp
-    ChatWindow.ui
-    ChatWindow.h ChatWindow.cpp )
+add_executable(client ${PROJECT_SOURCES})
+
 target_link_libraries(client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
@@ -46,4 +59,6 @@ target_link_libraries(client PRIVATE
     spdlog::spdlog
 )
 
-set_target_properties(client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR} )
+set_target_properties(client PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+)

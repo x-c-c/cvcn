@@ -33,6 +33,11 @@ private slots:
     void onAuthFinished(bool success, uint32_t sessionID);
     void onDeleteFinished(bool success);
     void onError(const QString& errorString);
+
+    void onMessageReceived(uint32_t senderID,
+                           const QString& senderUsername,
+                           uint32_t chatID,
+                           const QString& text);
 };
 
 #endif // CONTROLLER_H

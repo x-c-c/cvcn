@@ -22,6 +22,9 @@ Controller::Controller(Model& model, AccountDialog& view, ChatWindow& chatWindow
     connect(&model_, &Model::usersFound, this, &Controller::onUsersFound);
     connect(&model_, &Model::chatCreated, this, &Controller::onChatCreated);
     connect(&model_, &Model::chatListReceived, this, &Controller::onChatListReceived);
+
+
+    connect(&model_, &Model::messageReceived, this, &Controller::onMessageReceived);
 }
 
 void Controller::connectToServer(const QString& host, quint16 port)
@@ -144,7 +147,14 @@ void Controller::onChatListReceived(const std::vector<ChatListEntry>& chats)
     chatWindow_.setChatList(chats);
 }
 
-
+void Controller::onMessageReceived(uint32_t senderID,
+                                   const QString& senderUsername,
+                                   uint32_t chatID,
+                                   const QString& text)
+{
+    Q_UNUSED(senderID);
+    chatWindow_.appendIncomingMessage(chatID, senderUsername, text);
+}
 
 
 

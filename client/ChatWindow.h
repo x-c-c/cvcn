@@ -27,6 +27,7 @@ public:
     void setChatList(const std::vector<ChatListEntry>& chats);
     void addChat(uint32_t chatID, const QString& peerUsername);
     uint32_t currentChatID() const { return currentChatID_; }
+    void appendIncomingMessage(uint32_t chatID, const QString& sender, const QString& text);
 signals:
     void signalMessageSendRequested(uint32_t currentChatID, const QString& text);
     void signalFindUserRequested(const QString& query);
