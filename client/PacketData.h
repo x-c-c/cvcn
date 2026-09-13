@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+
 enum class PacketType : uint16_t
 {
     ConnectRequest      = 0x1,
@@ -19,46 +20,60 @@ enum class PacketType : uint16_t
     CreateChatRequest   = 0xD,
     CreateChatResponse  = 0xE,
     ChatListRequest     = 0xF,
-    ChatListResponse    = 0x10
+    ChatListResponse    = 0x10,
+    MessageReceive      = 0x11
 };
 
 #pragma pack(push, 1)
 struct PacketHeaderRaw
 {
-    uint16_t type;          ///< Тип пакета (DataType).
-    uint32_t messageID;     ///< Уникальный идентификатор сообщения.
-    uint32_t sessionID;     ///< Идентификатор сессии.
-    uint16_t messageLen;    ///< Длина тела пакета в байтах (после заголовка).
+    uint16_t type;
+    uint32_t messageID;
+    uint32_t sessionID;
+    uint16_t messageLen;
 };
 #pragma pack(pop)
 
 struct ConnectRequestData {};
 struct ConnectResponseData {};
+
 struct RegisterRequestData
 {
-	std::string username;   ///< Имя пользователя.
-	std::string password;   ///< Пароль (в будущем – хэш).
+    std::string username;
+    std::string password;
 };
 struct RegisterResponseData
 {
-	uint8_t success;        ///< 1 – успех, 0 – ошибка.
+    uint8_t success;
 };
+
 struct AuthRequestData
 {
-	std::string username;   ///< Имя пользователя.
-	std::string password;   ///< Пароль (в будущем – хэш).
+    std::string username;
+    std::string password;
 };
 struct AuthResponseData
 {
-	uint8_t success;        ///< 1 – успех, 0 – ошибка.
+    uint8_t success;
 };
+
 struct MessageSendData
 {
-	uint32_t senderID;      ///< Идентификатор отправителя.
-	uint32_t chatID;        ///< Идентификатор чата/получателя.
-	std::string text;       ///< Текст сообщения.
+    uint32_t senderID;
+    uint32_t chatID;
+    std::string text;
 };
+
+struct MessageReceiveData
+{
+    uint32_t senderID;          ///< ID отправителя
+    std::string senderUsername; ///< Имя отправителя, чтобы клиент не делал доп. запросов
+    uint32_t chatID;
+    std::string text;
+};
+
 struct DisconnectRequestData {};
+
 struct DeleteRequestData
 {
     std::string username;
@@ -68,6 +83,7 @@ struct DeleteResponseData
 {
     uint8_t success;
 };
+
 struct FindUserRequestData
 {
     std::string query;
@@ -79,7 +95,7 @@ struct FindUserResponseData
 
 struct CreateChatRequestData
 {
-    std::string peerUsername;       ///< С кем создать 1:1 чат
+    std::string peerUsername;
 };
 struct CreateChatResponseData
 {
@@ -98,7 +114,3 @@ struct ChatListResponseData
 {
     std::vector<ChatListEntry> chats;
 };
-
-
-
-

@@ -80,7 +80,16 @@ bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, Disco
     (void)data;
     return true;
 }
-
+bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, MessageReceiveData& data)
+{
+    const uint8_t* cursor = body.data();
+    size_t remaining = body.size();
+    data.senderID       = ByteReader::readUint32BE(cursor, remaining);
+    data.senderUsername = ByteReader::readString(cursor, remaining);
+    data.chatID         = ByteReader::readUint32BE(cursor, remaining);
+    data.text           = ByteReader::readString(cursor, remaining);
+    return remaining == 0;
+}
 bool PacketDeserializer::deserializeData(const std::vector<uint8_t>& body, DeleteRequestData& data)
 {
     const uint8_t* cursor = body.data();

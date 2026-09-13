@@ -79,6 +79,16 @@ std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t ses
     return buildPacket(PacketType::DeleteRequest, messageID, sessionID, body);
 }
 
+std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const MessageReceiveData& data)
+{
+    std::vector<uint8_t> body;
+    ByteWriter::writeUint32BE(body, data.senderID);
+    ByteWriter::writeString(body, data.senderUsername);
+    ByteWriter::writeUint32BE(body, data.chatID);
+    ByteWriter::writeString(body, data.text);
+    return buildPacket(PacketType::MessageReceive, messageID, sessionID, body);
+}
+
 std::vector<uint8_t> PacketBuilder::buildPacket(uint32_t messageID, uint32_t sessionID, const DeleteResponseData& data)
 {
     std::vector<uint8_t> body;

@@ -22,4 +22,9 @@ private:
 	MessageRepository* msgRepo_;
 	ChatRepository* chatRepo_;
 	SessionRegistry* sessionRegistry_;
+
+	/** @brief Разослать MessageReceive всем участникам чата, кроме отправителя. */
+	void broadcastToChat(const std::vector<int>& memberIDs,
+						 int excludeUserID,
+						 const MessageReceiveData& payload);
 };

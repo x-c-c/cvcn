@@ -20,6 +20,7 @@ public:
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const AuthResponseData&);
 
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const MessageSendData&);
+    static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const MessageReceiveData&);
 
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const DisconnectRequestData&);
 
@@ -34,6 +35,7 @@ public:
 
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ChatListRequestData&);
     static std::vector<uint8_t> buildPacket(uint32_t messageID, uint32_t sessionID, const ChatListResponseData&);
+
 };
 
 #endif // PACKETBUILDER_H

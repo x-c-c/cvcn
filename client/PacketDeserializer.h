@@ -18,6 +18,7 @@ public:
     static bool deserializeData(const std::vector<uint8_t>& body, AuthResponseData& data);
 
     static bool deserializeData(const std::vector<uint8_t>& body, MessageSendData& data);
+    static bool deserializeData(const std::vector<uint8_t>& body, MessageReceiveData& data);
 
     static bool deserializeData(const std::vector<uint8_t>& body, DisconnectRequestData& data);
 
