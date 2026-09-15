@@ -13,29 +13,37 @@ find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 
 set(PROJECT_SOURCES
-    main.cpp
-    AccountDialog.cpp
-    AccountDialog.h
-    AccountDialog.ui
-    Model.cpp
-    Model.h
-    Controller.cpp
-    Controller.h
-    Logger.cpp
-    Logger.h
-    ByteWriter.cpp
-    ByteWriter.h
-    ByteReader.cpp
-    ByteReader.h
-    PacketBuilder.cpp
-    PacketBuilder.h
-    PacketDeserializer.cpp
-    PacketDeserializer.h
-    PacketData.h
+    app/main.cpp
+    ui/AccountDialog.cpp
+    ui/AccountDialog.h
+    ui/AccountDialog.ui
+    app/Model.cpp
+    app/Model.h
+    app/Controller.cpp
+    app/Controller.h
+    utils/Logger.cpp
+    utils/Logger.h
+    protocol/ByteWriter.cpp
+    protocol/ByteWriter.h
+    protocol/ByteReader.cpp
+    protocol/ByteReader.h
+    protocol/PacketBuilder.cpp
+    protocol/PacketBuilder.h
+    protocol/PacketParser.cpp
+    protocol/PacketParser.h
+    protocol/PacketData.h
 
 )
 
 add_executable(client ${PROJECT_SOURCES} )
+target_include_directories(client PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/app
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/protocol
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils
+)
+
 target_link_libraries(client PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
