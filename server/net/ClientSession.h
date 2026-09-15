@@ -22,9 +22,9 @@ public:
 
     int getSocketDescriptor() const { return socketFD_; }
     bool isClosed() const { return closed_; }
-    
+    uint32_t sessionID_ = 0;
 private:
-	int TEMP_BUFFER_SIZE = 4096;
+	static constexpr std::size_t TEMP_BUFFER_SIZE = 4096;
     int socketFD_;
     bool closed_ = false;
     EventPoller* eventPoller_;

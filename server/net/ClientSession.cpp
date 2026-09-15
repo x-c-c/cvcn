@@ -93,10 +93,17 @@ void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vect
     }
 }
 
+void ClientSession::handlePacket(uint32_t messageID, uint32_t /*sessionID*/, const ConnectRequestData& /*data*/)
+{
+    sessionID_ = static_cast<uint32_t>(socketFD_);
+    const ConnectResponseData responseData;
+    const auto response = PacketBuilder::buildPacket(messageID, sessionID_, responseData);
+    sender_.sendResponse(response);
+}
+
 void ClientSession::handlePacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestData& data)
 {
     RegisterResponseData resp{};
-
     if (db_->isUserExist(data.username))
     {
         resp.success = 0;
@@ -106,6 +113,7 @@ void ClientSession::handlePacket(uint32_t messageID, uint32_t sessionID, const R
         const std::string hash = "hash_" + data.password;
         resp.success = db_->addUser(data.username, hash) ? 1 : 0;
     }
+
     const auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
     sender_.sendResponse(response);
 }
@@ -113,20 +121,16 @@ void ClientSession::handlePacket(uint32_t messageID, uint32_t sessionID, const R
 void ClientSession::handlePacket(uint32_t messageID, uint32_t sessionID, const AuthRequestData& data)
 {
     AuthResponseData resp{};
-
     const std::string storedHash = db_->getUserPasswordHash(data.username);
     resp.success = (!storedHash.empty() && storedHash == "hash_" + data.password) ? 1 : 0;
-
     const auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
     sender_.sendResponse(response);
 }
 
-void ClientSession::handlePacket(uint32_t /*messageID*/, uint32_t /*sessionID*/,
-                                 const MessageSendData& data)
+void ClientSession::handlePacket(uint32_t /*messageID*/, uint32_t /*sessionID*/, const MessageSendData& data)
 {
-    Logger::instance().info("Message from {} to chat {}: {}",
-                            data.senderID, data.chatID, data.text);
-    // TODO: разослать MessageReceive участникам чата.
+    Logger::instance().info("Message from {} to chat {}: {}", data.senderID, data.chatID, data.text);
+    // TODO: разослать MessageReceive участникам чата
 }
 
 void ClientSession::handlePacket()
