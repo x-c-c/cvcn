@@ -2,7 +2,8 @@
 #include <sys/epoll.h>
 #include <atomic>
 #include <functional>
-
+#include <stdexcept>
+#include <string>
 class EventPoller
 {
 public:

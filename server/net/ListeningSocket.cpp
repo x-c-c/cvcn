@@ -1,6 +1,8 @@
 #include "./ListeningSocket.h"
 #include "../utils/Logger.h"
 #include <cstring>
+#include <stdexcept>
+#include <string>
 ListeningSocket::~ListeningSocket()
 {
 	closeSocket();
@@ -23,24 +25,21 @@ void ListeningSocket::start(const ServerConfig& config)
 	serverSocketFD_ = socket(config.getDomain(), config.getType(), config.getProtocol());
 	if (serverSocketFD_ < 0)
 	{
-		Logger::instance().critical("socket() failed: {}", strerror(errno));
 		closeSocket();
-		return;
+		throw std::runtime_error( std::string("socket() failed: ") + strerror(errno));
 	}
 	setsockopt(serverSocketFD_, SOL_SOCKET, SO_REUSEADDR, &reuseAddrOption, sizeof(reuseAddrOption));
 	initServerAddr(config);
 	if (bind(serverSocketFD_, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) != 0)
 	{
-		Logger::instance().critical("bind() on port {} failed: {}", config.getPort(), strerror(errno));
 		closeSocket();
-		return;
+		throw std::runtime_error( std::string("socket() failed: ") + strerror(errno));
 	}
 
 	if (listen(serverSocketFD_, SOMAXCONN) != 0)
 	{
-		Logger::instance().critical("listen() failed: {}", strerror(errno));
 		closeSocket();
-		return;
+		throw std::runtime_error( std::string("socket() failed: ") + strerror(errno));
 	}
 	
 	Logger::instance().info("Server listening on port {}", config.getPort());

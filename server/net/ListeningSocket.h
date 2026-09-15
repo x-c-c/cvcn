@@ -3,8 +3,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-class Database;
-
 class ListeningSocket
 {
 private:

@@ -7,39 +7,62 @@
 #include "../storage/Database.h"
 #include "./ShutdownSignal.h"
 
+#include <exception>
+#include <cstdlib>
+#include <iostream>
+
 int main()
 {
-	ShutdownSignal::setup();
-	Logger::instance().info("Server starting up");
-	Database db("chat.db");
-	ServerConfig config;
-	int chosenPort = getValidPort(config.getPort());
-	if (chosenPort == -1)
+	try
 	{
-		Logger::instance().info("Shutdown requested during port selection");
-		return 0;
+		ShutdownSignal::setup();
+		Logger::instance().info("Server starting up");
+		Database db("chat.db");
+		ServerConfig config;
+		int chosenPort = getValidPort(config.getPort());
+		if (chosenPort == -1)
+		{
+			Logger::instance().info("Shutdown requested during port selection");
+			return 0;
+		}
+		config.setPort(chosenPort);
+		ListeningSocket server;
+		server.start(config);
+		if (server.getServerSocketFD() < 0)
+		{
+			Logger::instance().critical("Listening socket not available, exiting");
+			return 1;
+		}
+			
+		EventPoller epoller;
+		SessionManager sessions(epoller, db);
+		epoller.setNewConnectionCallback(
+			[&sessions](int fd){ sessions.onNewConnection(fd); });
+		epoller.setReadEventCallback(
+			[&sessions](int fd) { sessions.onRead(fd); });
+		epoller.setWriteEventCallback(
+			[&sessions](int fd) { sessions.onWrite(fd); });
+		epoller.setErrorEventCallback(
+			[&sessions](int fd, uint32_t ev) { sessions.onError(fd, ev); });
+		
+		
+		
+		// throw std::runtime_error("test exception");		// просто проверить что вообще работают исключения
+		
+		
+		epoller.startEpollLoop(server.getServerSocketFD());
+		
+		Logger::instance().info("Server shutdown");
 	}
-	config.setPort(chosenPort);
-	ListeningSocket server;
-	server.start(config);
-	if (server.getServerSocketFD() < 0)
+	catch (const std::exception& e)
     {
-		Logger::instance().critical("Listening socket not available, exiting");
-		return 1;
+		Logger::instance().critical("Fatal: {}", e.what());
+        return 1;
     }
-        
-	EventPoller epoller;
-	SessionManager sessions(epoller, db);
-	epoller.setNewConnectionCallback(
-		[&sessions](int fd){ sessions.onNewConnection(fd); });
-    epoller.setReadEventCallback(
-		[&sessions](int fd) { sessions.onRead(fd); });
-    epoller.setWriteEventCallback(
-		[&sessions](int fd) { sessions.onWrite(fd); });
-    epoller.setErrorEventCallback(
-		[&sessions](int fd, uint32_t ev) { sessions.onError(fd, ev); });
-	epoller.startEpollLoop(server.getServerSocketFD());
-	
-	Logger::instance().info("Server shutdown");
+    catch (...)
+    {
+        std::cerr << "[Fatal]: unknown exception" << std::endl;
+        return 1;
+    }
 	return 0;
 }

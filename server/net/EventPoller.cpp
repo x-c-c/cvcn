@@ -58,54 +58,6 @@ void EventPoller::modifyFdEvents(int fileDescriptor, uint32_t events)
 		Logger::instance().error("epoll_ctl MOD failed for fd {}: {}", fileDescriptor, strerror(errno));
 	}
 }
-/*
-void EventPoller::handleNewConnection(int serverSocketFD)
-{
-	int clientSocketFD = accept(serverSocketFD, nullptr, nullptr);
-	if (clientSocketFD > 0)
-	{
-		int flags = fcntl(clientSocketFD, F_GETFL, 0);
-		if (flags == -1)
-		{
-			Logger::instance().error("fcntl F_GETFL failed for fd {}: {}", clientSocketFD, strerror(errno));
-			close(clientSocketFD);
-			return;
-		}
-		if (fcntl(clientSocketFD, F_SETFL, flags | O_NONBLOCK) == -1)
-		{
-			Logger::instance().error("fcntl F_SETFL O_NONBLOCK failed for fd {}: {}", clientSocketFD, strerror(errno));
-			close(clientSocketFD);
-			return;
-		}
-		addFdToEpoll(clientSocketFD, EPOLLIN | EPOLLET);
-		sessions_[clientSocketFD] = new ClientSession(clientSocketFD, this, db_);
-		Logger::instance().info("New client connected, fd={}", clientSocketFD);
-	}
-	else
-	{
-		Logger::instance().error("accept() failed: {}", strerror(errno));
-	}
-}
-
-void EventPoller::closeClient(int fileDescriptor)
-{
-	removeFdFromEpoll(fileDescriptor);
-	auto it = sessions_.find(fileDescriptor);
-	if (it != sessions_.end())
-	{
-		if (!it->second->isClosed())
-		{
-			it->second->closeSession();
-		}
-		delete it->second;
-		sessions_.erase(it);
-	}
-	else
-	{
-		close(fileDescriptor);
-	}
-}
-*/
 void EventPoller::startEpollLoop(int serverSocketFD)
 {
 	int flags = fcntl(serverSocketFD, F_GETFL, 0);
@@ -187,20 +139,6 @@ void EventPoller::startEpollLoop(int serverSocketFD)
 
 void EventPoller::stopEpollLoop()
 {
-	/*
-	running_ = false;
-	for (auto& pair : sessions_)
-	{
-		if (!pair.second->isClosed())
-		{
-			pair.second->closeSession();
-		}
-		delete pair.second;
-	}
-	sessions_.clear();
-	close(epollFD_);
-	epollFD_ = -1;
-	*/
 	running_ = false;
 	if (epollFD_ != -1)
 	{

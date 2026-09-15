@@ -10,6 +10,7 @@ Controller::Controller(Model& model, AccountDialog& view): QObject(nullptr), mod
 
 void Controller::slotAuthRequested(const QString& username, const QString& password)
 {
+    model_.sendAuthRequest(username, password);
 }
 void Controller::slotRegRequested(const QString& username, const QString& password)
 {
