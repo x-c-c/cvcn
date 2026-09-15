@@ -1,6 +1,7 @@
 #include "ClientSession.h"
 #include "EventPoller.h"
 #include "PacketDispatcher.h"
+#include "ResultQueue.h"
 #include "AppConfig.h"
 #include "Logger.h"
 #include <cstring>
@@ -11,20 +12,24 @@
 
 ClientSession::ClientSession(int fileDescriptor,
                              EventPoller* eventPoller,
-                             PacketDispatcher* dispatcher):
+                             PacketDispatcher* dispatcher,
+                             ResultQueue* resultQueue):
     fileDescriptor_(fileDescriptor),
     eventPoller_(eventPoller),
     dispatcher_(dispatcher),
+    resultQueue_(resultQueue),
     sender_(eventPoller, fileDescriptor){}
 
 ClientSession::~ClientSession()
 {
-    if (!closed_)
+    if (!closed_.load())
         closeSession();
 }
 
-void ClientSession::handleRead()
+std::vector<Task> ClientSession::handleRead()
 {
+    std::vector<Task> tasks;
+
     try
     {
         uint8_t tempBuffer[config::SESSION_READ_BUFFER_SIZE];
@@ -36,9 +41,14 @@ void ClientSession::handleRead()
             std::vector<uint8_t> body;
             while (assembler_.extractPacket(header, body))
             {
-                processPacket(header, body);
-                if (closed_)
-                    return;
+                if (header.messageLen > config::MAX_REASONABLE_PACKET_BODY)
+                {
+                    LOG_WARN("Packet too large: {} bytes (fd {})",
+                        header.messageLen, fileDescriptor_);
+                    closeSession();
+                    return tasks;
+                }
+                tasks.push_back(Task{ this, header, std::move(body) });
             }
         }
         else if (bytesRead == 0)
@@ -67,6 +77,8 @@ void ClientSession::handleRead()
         LOG_ERROR("Unknown exception in handleRead (fd {})", fileDescriptor_);
         closeSession();
     }
+
+    return tasks;
 }
 
 void ClientSession::handleWrite()
@@ -74,10 +86,32 @@ void ClientSession::handleWrite()
     sender_.handleWrite();
 }
 
-void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
+void ClientSession::sendRaw(const std::vector<uint8_t>& data)
 {
-    if (dispatcher_)
-        dispatcher_->dispatch(header, body, this);
+    if (!resultQueue_)
+        return;
+
+    SessionCommand cmd;
+    cmd.type = CommandType::SendRaw;
+    cmd.fd = fileDescriptor_;
+    cmd.data = data;
+    resultQueue_->push(std::move(cmd));
+}
+
+void ClientSession::requestClose()
+{
+    if (!resultQueue_)
+        return;
+
+    SessionCommand cmd;
+    cmd.type = CommandType::Close;
+    cmd.fd = fileDescriptor_;
+    resultQueue_->push(std::move(cmd));
+}
+
+void ClientSession::sendRawDirect(const std::vector<uint8_t>& data)
+{
+    sender_.sendPacket(data);
 }
 
 void ClientSession::setAuthenticated(int userID, const std::string& username)
@@ -86,17 +120,13 @@ void ClientSession::setAuthenticated(int userID, const std::string& username)
     username_ = username;
 }
 
-void ClientSession::sendRaw(const std::vector<uint8_t>& data)
-{
-    sender_.sendPacket(data);
-}
-
 void ClientSession::closeSession()
 {
-    if (closed_)
+    if (closed_.exchange(true))
         return;
-    eventPoller_->removeFileDescriptor(fileDescriptor_);
+
+    if (eventPoller_)
+        eventPoller_->removeFileDescriptor(fileDescriptor_);
     close(fileDescriptor_);
-    closed_ = true;
     LOG_INFO("Session closed for fd {}", fileDescriptor_);
 }

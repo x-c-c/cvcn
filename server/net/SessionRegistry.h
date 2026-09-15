@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 #include <cstdint>
 #include "ISessionRegistry.h"
 
@@ -8,10 +9,7 @@ class IClientSession;
 
 /**
  * @file SessionRegistry.h
- * @brief Индекс «userID → активная сессия».
- *
- * Не владеет сессиями. Только хранит указатели, которые
- * живут в SessionManager.
+ * @brief Индекс «userID → активная сессия». Thread-safe.
  */
 class SessionRegistry : public ISessionRegistry
 {
@@ -22,5 +20,6 @@ public:
     std::vector<IClientSession*> findByUserIDs(const std::vector<int>& userIDs) const override;
 
 private:
+    mutable std::mutex mutex_;
     std::unordered_map<int, IClientSession*> byUserID_;
 };

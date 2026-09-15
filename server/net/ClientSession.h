@@ -3,53 +3,64 @@
 #include "PacketData.h"
 #include "PacketAssembler.h"
 #include "PacketSender.h"
+#include "Task.h"
 #include <sys/socket.h>
+#include <atomic>
 #include <string>
 #include <vector>
 
 class EventPoller;
 class PacketDispatcher;
+class ResultQueue;
 
 /**
  * @file ClientSession.h
- * @brief Одна клиентская сессия: сокет, буфер, состояние аутентификации.
+ * @brief Одна клиентская сессия.
  *
- * Владеет:
- *   - int fileDescriptor_
- *   - PacketAssembler assembler_
- *   - PacketSender sender_
- * Не владеет: EventPoller*, PacketDispatcher*.
+ * handleRead вызывается из main-thread: читает байты, извлекает пакеты,
+ * возвращает vector<Task> для отправки в ThreadPool.
+ *
+ * sendRaw/requestClose вызываются из воркеров: не отправляют данные
+ * напрямую, а кладут команду в ResultQueue (кроме sendRawDirect,
+ * которая используется только main-thread при обработке очереди).
  */
 class ClientSession : public IClientSession
 {
 public:
     ClientSession(int fileDescriptor,
                   EventPoller* eventPoller,
-                  PacketDispatcher* dispatcher);
+                  PacketDispatcher* dispatcher,
+                  ResultQueue* resultQueue);
     ~ClientSession() override;
 
-    void handleRead();
+    /** @brief Прочитать доступные байты, вернуть список задач. main-thread. */
+    std::vector<Task> handleRead();
     void handleWrite();
 
-    // IClientSession
+    // IClientSession (thread-safe)
     void sendRaw(const std::vector<uint8_t>& data) override;
+    void requestClose() override;
     int getFileDescriptor() const override { return fileDescriptor_; }
     int getUserID() const override { return userID_; }
     const std::string& getUsername() const override { return username_; }
     void setAuthenticated(int userID, const std::string& username) override;
-    void closeSession() override;
-    bool isClosed() const override { return closed_; }
+    bool isClosed() const override { return closed_.load(); }
+
+    /** @brief Немедленно отправить байты. Только main-thread. */
+    void sendRawDirect(const std::vector<uint8_t>& data);
+
+    /** @brief Закрыть сессию. Только main-thread. */
+    void closeSession();
 
 private:
     int fileDescriptor_;
-    bool closed_ = false;
+    std::atomic<bool> closed_{false};
     EventPoller* eventPoller_;
     PacketDispatcher* dispatcher_;
+    ResultQueue* resultQueue_;
     PacketAssembler assembler_;
     PacketSender sender_;
 
     int userID_ = -1;
     std::string username_;
-
-    void processPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body);
 };

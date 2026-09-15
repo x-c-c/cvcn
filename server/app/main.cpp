@@ -14,6 +14,10 @@
 #include "PacketDispatcher.h"
 #include "EventPoller.h"
 #include "SessionManager.h"
+#include "ThreadPool.h"
+#include "ResultQueue.h"
+#include <chrono>
+#include <thread>
 #include <exception>
 #include <cstdlib>
 #include <iostream>
@@ -61,15 +65,80 @@ int main()
         ListeningSocket listener;
         listener.startListening(config);
 
+        ResultQueue resultQueue;
+        ThreadPool threadPool(std::thread::hardware_concurrency());
+
         EventPoller eventPoller;
-        SessionManager sessionManager(&dispatcher, &sessionRegistry, &eventPoller);
+        SessionManager sessionManager(&dispatcher, &sessionRegistry,
+                                      &eventPoller, &threadPool, &resultQueue);
 
-        eventPoller.setNewConnectionCallback([&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
-        eventPoller.setReadEventCallback   ([&sessionManager](int fd){ sessionManager.onRead(fd); });
-        eventPoller.setWriteEventCallback  ([&sessionManager](int fd){ sessionManager.onWrite(fd); });
-        eventPoller.setErrorEventCallback  ([&sessionManager](int fd, uint32_t ev){ sessionManager.onError(fd, ev); });
+        eventPoller.setNewConnectionCallback(
+            [&sessionManager](int fd){ sessionManager.onNewConnection(fd); });
+        eventPoller.setWriteEventCallback(
+            [&sessionManager](int fd){ sessionManager.onWrite(fd); });
+        eventPoller.setErrorEventCallback(
+            [&sessionManager](int fd, uint32_t ev){ sessionManager.onError(fd, ev); });
 
+        eventPoller.setReadEventCallback([&](int fd) {
+            if (fd == resultQueue.eventFd())
+            {
+                auto commands = resultQueue.drain();
+                for (auto& cmd : commands)
+                {
+                    switch (cmd.type)
+                    {
+                    case CommandType::SendRaw:
+                    {
+                        ClientSession* s = sessionManager.getSession(cmd.fd);
+                        if (s && !s->isClosed())
+                            s->sendRawDirect(cmd.data);
+                        break;
+                    }
+                    case CommandType::Close:
+                        sessionManager.requestCloseClient(cmd.fd);
+                        break;
+                    case CommandType::TaskDone:
+                        sessionManager.onTaskDone(cmd.fd);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                sessionManager.onRead(fd);
+            }
+        });
+
+        eventPoller.addFileDescriptor(resultQueue.eventFd(), EPOLLIN);
         eventPoller.startEventLoop(listener.fileDescriptor());
+
+        // Graceful shutdown: дать воркерам завершить работу.
+        LOG_INFO("Draining worker tasks...");
+        while (threadPool.hasPendingTasks())
+        {
+            auto commands = resultQueue.drain();
+            for (auto& cmd : commands)
+            {
+                switch (cmd.type)
+                {
+                case CommandType::SendRaw:
+                {
+                    ClientSession* s = sessionManager.getSession(cmd.fd);
+                    if (s && !s->isClosed())
+                        s->sendRawDirect(cmd.data);
+                    break;
+                }
+                case CommandType::Close:
+                    sessionManager.requestCloseClient(cmd.fd);
+                    break;
+                case CommandType::TaskDone:
+                    sessionManager.onTaskDone(cmd.fd);
+                    break;
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        threadPool.stop();
 
         LOG_INFO("Server shutdown");
         return 0;

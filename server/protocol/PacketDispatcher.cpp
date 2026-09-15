@@ -169,5 +169,5 @@ void PacketDispatcher::handleConnectRequest(const PacketHeaderRaw& header, IClie
 void PacketDispatcher::handleDisconnectRequest(IClientSession* session)
 {
     LOG_INFO("Client {} requested disconnect", session->getFileDescriptor());
-    session->closeSession();
+    session->requestClose();
 }

@@ -34,6 +34,8 @@ SRCS := \
 	net/PacketSender.cpp \
 	net/SessionManager.cpp \
 	net/SessionRegistry.cpp \
+	net/ResultQueue.cpp \
+	net/ThreadPool.cpp \
 	protocol/PacketBuilder.cpp \
 	protocol/PacketParser.cpp \
 	protocol/PacketDispatcher.cpp \
@@ -62,6 +64,9 @@ HEADERS := \
 	net/SessionManager.h \
 	net/SessionRegistry.h \
 	net/ISessionRegistry.h \
+	net/ResultQueue.h \
+	net/ThreadPool.h \
+	net/Task.h \
 	protocol/PacketData.h \
 	protocol/PacketBuilder.h \
 	protocol/PacketParser.h \
