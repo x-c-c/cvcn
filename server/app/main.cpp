@@ -38,7 +38,7 @@ int main()
 		[&sessions](int fd) { sessions.onWrite(fd); });
     epoller.setErrorEventCallback(
 		[&sessions](int fd, uint32_t ev) { sessions.onError(fd, ev); });
-	
+	epoller.startEpollLoop(server.getServerSocketFD());
 	
 	Logger::instance().info("Server shutdown");
 	return 0;

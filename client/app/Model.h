@@ -15,12 +15,16 @@ public:
     ~Model() = default;
     void connectToServer(const QString& address, const quint16 port);
     void sendRegRequest(const QString& username, const QString& password);
+    void sendAuthRequest(const QString& username, const QString& password);
+    //void sendDelRequest(const QString& username, const QString& password);
     void sendPacket(const std::vector<uint8_t>& packet);
+signals:
+    void errorOccurred(const QString& message);
 private:
     QTcpSocket* socket_;
     uint32_t messageID_ = 0;
     uint32_t sessionID_ = 0;
-    vector<uint8_t> receiveBuffer_ = {};
+    std::vector<uint8_t> receiveBuffer_ = {};
     void increaseMessageID();
 private slots:
     void slotConnected();

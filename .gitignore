@@ -75,4 +75,4 @@ server
 
 # Logs directory
 logs/
-*.db
+chat.db

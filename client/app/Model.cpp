@@ -1,6 +1,6 @@
+#include <QDebug>
 #include "./Model.h"
 #include "../protocol/PacketData.h"
-#include <QDebug>
 #include "../protocol/PacketBuilder.h"
 #include "../protocol/PacketParser.h"
 Model::Model(QObject* parent): QObject(parent), socket_(nullptr)
@@ -22,63 +22,80 @@ void Model::slotConnected()
 void Model::slotSocketError(QAbstractSocket::SocketError error)
 {
     qDebug() << "Socket error:" << socket_->errorString() << "(code " << error << " )";
+    emit errorOccurred(socket_->errorString());
 }
 void Model::slotReadyRead()
 {
-    QByteArray chunk = socket_->readAll();
-    receiveBuffer_.append(chunk);
-    while (receiveBuffer_.size() >sizeof(PacketHeaderRaw))
+    const QByteArray chunk = socket_->readAll();
+    receiveBuffer_.insert(receiveBuffer_.end(), chunk.begin(), chunk.end());
+
+    while (receiveBuffer_.size() >= sizeof(PacketHeaderRaw))
     {
         PacketHeaderRaw header;
-        PacketParser::deserializeHeader(receiveBuffer_, header);
-        if  (receiveBuffer_.size() >=  header.messageLen)
-        {
+        if (!PacketParser::deserializeHeader(receiveBuffer_, header))
+            return;
 
-        }
+        const std::size_t totalSize = sizeof(PacketHeaderRaw) + header.messageLen;
+        if (receiveBuffer_.size() < totalSize)
+            return;   // ждём остаток
+
+        std::vector<uint8_t> body(receiveBuffer_.begin() + sizeof(PacketHeaderRaw), receiveBuffer_.begin() + totalSize);
+
+        receiveBuffer_.erase(receiveBuffer_.begin(), receiveBuffer_.begin() + totalSize);
+
+        qDebug() << "Packet type:" << static_cast<int>(header.type)
+                 << "messageID:"   << header.messageID
+                 << "sessionID:"   << header.sessionID
+                 << "len:"         << header.messageLen;
     }
 }
-
-
 
 void Model::sendPacket(const std::vector<uint8_t>& packet)
 {
     if (socket_->state() != QAbstractSocket::ConnectedState)
     {
+        emit errorOccurred(QStringLiteral("Not connected to server"));
         return;
     }
-    QByteArray data = QByteArray::fromRawData(
-        reinterpret_cast<const char*>(packet.data()),
-        static_cast<int>(packet.size())
-        );
 
-    qint64 bytesWritten  =  socket_->write(data);
+    const QByteArray data(reinterpret_cast<const char*>(packet.data()), static_cast<int>(packet.size()));
+    const qint64 bytesWritten = socket_->write(data);
     if (bytesWritten == -1)
-    {
         emit errorOccurred(socket_->errorString());
-    }
 }
-
 
 void Model::sendRegRequest(const QString& username, const QString& password)
 {
     RegisterRequestData payload;
     payload.username = username.toStdString();
     payload.password = password.toStdString();
-    std::vector<uint8_t> packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    const auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
     sendPacket(packet);
     increaseMessageID();
 }
 
+void Model::sendAuthRequest(const QString& username, const QString& password)
+{
+    AuthRequestData payload;
+    payload.username = username.toStdString();
+    payload.password = password.toStdString();
+    const auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+}
+
+/*
+void Model::sendDelRequest(const QString& username, const QString& password)
+{
+    DeleteRequestData payload;
+    payload.username = username.toStdString();
+    payload.password = password.toStdString();
+    const auto packet = PacketBuilder::buildPacket(messageID_, sessionID_, payload);
+    sendPacket(packet);
+    increaseMessageID();
+}
+*/
 void Model::increaseMessageID()
 {
     ++messageID_;
 }
-
-
-
-
-
-
-
-
-
