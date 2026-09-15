@@ -1,3 +1,21 @@
+/**
+ * @file    main.cpp
+ * @brief   Точка входа сервера.
+ *
+ * @details
+ *   Порядок инициализации:
+ *     1. ShutdownSignal  — обработчики SIGINT/SIGTERM, чтобы Ctrl+C корректно останавливал epoll-цикл.
+ *     2. Logger          — единая точка логирования.
+ *     3. Database        — открывает chat.db.
+ *     4. PortSelector    — интерактивный выбор свободного порта.
+ *     5. ListeningSocket — создание серверного слушающего сокета (socket/bind/listen).
+ *     6. EventPoller     — epoll-цикл для отслеживания изменений на сокетах клиентов.
+ *     7. SessionManager  — владеет ClientSession-ами, связан с EventPoller через callbacks.
+ *
+ * @note  Сервер однопоточный: весь event-loop крутится в этом потоке.
+ * @see   ShutdownSignal, ListeningSocket, EventPoller, SessionManager
+ */
+ 
 #include "../utils/Logger.h"
 #include "../config/ServerConfig.h"
 #include "../net/PortSelector.h"

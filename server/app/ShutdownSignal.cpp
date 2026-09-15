@@ -1,3 +1,8 @@
+/**
+ * @file    ShutdownSignal.cpp
+ * @brief   Реализация обработчиков сигналов и флага остановки.
+ * @see ShutdownSignal.h
+ */
 #include "./ShutdownSignal.h"
 
 volatile sig_atomic_t ShutdownSignal::stopRequested_ = 0;
