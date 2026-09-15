@@ -24,12 +24,31 @@ enum class CommandType
     TaskDone
 };
 
+/**
+ * @brief Одна команда из воркера в main-thread.
+ */
+
 struct SessionCommand
 {
     CommandType type;
     int fd;
     std::vector<uint8_t> data;   // для SendRaw
 };
+
+/**
+ * @brief Thread-safe очередь команд из воркеров в main-thread.
+ *
+ * Воркеры не вызывают методы сессии напрямую: они кладут SessionCommand
+ * в эту очередь и пишут 8 байт в eventfd. Main-thread, увидев событие
+ * на eventfd, вызывает drain() и выполняет все накопленные команды.
+ *
+ * @par Категории команд:
+ *   - SendRaw  — отправить байты клиенту по fd;
+ *   - Close    — закрыть сессию по fd;
+ *   - TaskDone — воркер закончил задачу по fd (уменьшить in-flight).
+ *
+ * @note push() безопасен из любого потока, drain() — только main-thread.
+ */
 
 class ResultQueue
 {

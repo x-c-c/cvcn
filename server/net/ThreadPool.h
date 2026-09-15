@@ -28,6 +28,12 @@ public:
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator=(const ThreadPool&) = delete;
 
+    /**
+     * @brief Поставить задачу в очередь.
+     * @param task задача без аргументов
+     * @note Безопасно из любого потока. После stop() вызов игнорируется.
+     */
+
     void submit(std::function<void()> task);
 
     /** @brief Ждать, пока все задачи (в очереди и в работе) не завершатся. */

@@ -27,18 +27,50 @@ class ResultQueue;
 class ClientSession : public IClientSession
 {
 public:
+    /**
+     * @brief Создать сессию для принятого сокета.
+     *
+     * @param fileDescriptor fd клиента (non-blocking)
+     * @param eventPoller    epoll-обёртка; не владеет
+     * @param dispatcher     обработчик пакетов; не владеет
+     * @param resultQueue    очередь команд в main-thread; не владеет
+     */
+
     ClientSession(int fileDescriptor,
                   EventPoller* eventPoller,
                   PacketDispatcher* dispatcher,
                   ResultQueue* resultQueue);
+    /**
+     * @brief Закрыть сессию, если она ещё открыта.
+     * @note Вызывается только из main-thread (SessionManager).
+     */
+
     ~ClientSession() override;
 
     /** @brief Прочитать доступные байты, вернуть список задач. main-thread. */
     std::vector<Task> handleRead();
+    /**
+     * @brief Возобновить отправку после EPOLLOUT.
+     * @note Только main-thread.
+     */
+
     void handleWrite();
 
     // IClientSession (thread-safe)
+    /**
+     * @brief Асинхронно отправить пакет клиенту.
+     * @param data пакет целиком (заголовок + тело)
+     * @post В ResultQueue лежит команда SendRaw.
+     * @note Безопасно из любого потока.
+     */
+
     void sendRaw(const std::vector<uint8_t>& data) override;
+    /**
+     * @brief Асинхронно запросить закрытие сессии.
+     * @post В ResultQueue лежит команда Close.
+     * @note Безопасно из любого потока, идемпотентно.
+     */
+
     void requestClose() override;
     int getFileDescriptor() const override { return fileDescriptor_; }
     int getUserID() const override { return userID_; }
