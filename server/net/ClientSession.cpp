@@ -1,14 +1,15 @@
 #include "./ClientSession.h"
 #include "./EventPoller.h"
-#include "Serializer.h"
+#include "../protocol/PacketParser.h"
+#include "../protocol/PacketBuilder.h"
+#include "../storage/Database.h"
 #include "../utils/Logger.h"
 #include <cstring>
 #include <cerrno>
-#include <arpa/inet.h>
 #include <unistd.h>
 
-ClientSession::ClientSession(int socketDescriptor, EventPoller* epoller, Database* db):
-	socketDescriptor_(socketDescriptor), epoller_(epoller), db_(db), sender_(epoller, socketDescriptor){}
+ClientSession::ClientSession(int socketFD, EventPoller* eventPoller, Database* db):
+	socketFD_(socketFD), eventPoller_(eventPoller), db_(db), sender_(eventPoller, socketFD){}
 
 ClientSession::~ClientSession()
 {
@@ -19,7 +20,7 @@ ClientSession::~ClientSession()
 void ClientSession::handleRead()
 {
     uint8_t tempBuffer[TEMP_BUFFER_SIZE];
-    ssize_t bytesRead = recv(socketDescriptor_, tempBuffer, sizeof(tempBuffer), 0);
+    ssize_t bytesRead = recv(socketFD_, tempBuffer, sizeof(tempBuffer), 0);
     if (bytesRead > 0)
     {
         assembler_.appendData(tempBuffer, bytesRead);
@@ -34,12 +35,12 @@ void ClientSession::handleRead()
     }
     else if (bytesRead == 0)
     {
-        Logger::instance().info("Client {} closed connection", socketDescriptor_);
+        Logger::instance().info("Client {} closed connection", socketFD_);
         closeSession();
     }
     else if (errno != EAGAIN && errno != EWOULDBLOCK)
     {
-        Logger::instance().error("recv error on fd {}: {}", socketDescriptor_, strerror(errno));
+        Logger::instance().error("recv error on fd {}: {}", socketFD_, strerror(errno));
         closeSession();
     }
 }
@@ -51,95 +52,86 @@ void ClientSession::handleWrite()
 
 void ClientSession::processPacket(const PacketHeaderRaw& header, const std::vector<uint8_t>& body)
 {
+	const uint32_t messageID = header.messageID;
+    const uint32_t sessionID = header.sessionID;
     switch (static_cast<PacketType>(header.type))
     {
-    case PacketType::ConnectRequest:
-        {
-            ConnectRequestPacket packet;
-            Serializer::parseConnectRequestPacket(body, packet);
-            handleConnectRequestPacket(header.messageID, header.sessionID);
-        }
-        break;
-    case PacketType::RegisterRequest:
-        {
-            RegisterRequestPacket packet;
-            if (Serializer::parseRegisterRequestPacket(body, packet))
-                handleRegisterRequestPacket(header.messageID, header.sessionID, packet);
-        }
-        break;
-    case PacketType::AuthRequest:
-        {
-            AuthRequestPacket packet;
-            if (Serializer::parseAuthRequestPacket(body, packet))
-                handleAuthRequestPacket(header.messageID, header.sessionID, packet);
-        }
-        break;
-    case PacketType::MessageSend:
-        {
-            MessageSendPacket packet;
-            if (Serializer::parseMessageSendPacket(body, packet))
-                handleMessageSendPacket(header.messageID, header.sessionID, packet);
-        }
-        break;
-    case PacketType::DisconnectRequest:
-        handleDisconnectRequestPacket();
-        break;
-    default:
-        Logger::instance().warn("Unknown packet type 0x{:X} from client {}", header.type, socketDescriptor_);
-        break;
+		case PacketType::ConnectRequest:
+		{
+			ConnectRequestData data;
+			if (PacketParser::deserializeData(body, data))
+				handlePacket(header.messageID, header.sessionID, data);
+			break;
+		}
+		case PacketType::RegisterRequest:
+		{
+			RegisterRequestData data;
+			if (PacketParser::deserializeData(body, data))
+				handlePacket(header.messageID, header.sessionID, data);
+			break;
+		}
+		case PacketType::AuthRequest:
+		{
+			AuthRequestData data;
+			if (PacketParser::deserializeData(body, data))
+				handlePacket(header.messageID, header.sessionID, data);
+			break;
+		}
+		case PacketType::MessageSend:
+		{
+			MessageSendData data;
+			if (PacketParser::deserializeData(body, data))
+				handlePacket(header.messageID, header.sessionID, data);
+			break;
+		}
+		case PacketType::DisconnectRequest:
+			handlePacket();
+			break;
+		default:
+			Logger::instance().warn("Unknown packet type 0x{:X} from client {}", static_cast<unsigned>(header.type), socketFD_);
+			break;
     }
 }
 
-void ClientSession::handleConnectRequestPacket(uint32_t messageID, uint32_t sessionID)
+void ClientSession::handlePacket(uint32_t messageID, uint32_t sessionID, const RegisterRequestData& data)
 {
-    uint32_t newSessionID = sessionID ? sessionID : static_cast<uint32_t>(socketDescriptor_);
-    auto response = Serializer::buildConnectResponsePacket(messageID, newSessionID);
-    sender_.sendResponse(response);
-}
+    RegisterResponseData resp{};
 
-void ClientSession::handleRegisterRequestPacket(uint32_t messageID, uint32_t sessionID,
-    const RegisterRequestPacket& packet)
-{
-    RegisterResponsePacket resp;
-    if (db_->isUserExist(packet.username))
+    if (db_->isUserExist(data.username))
     {
         resp.success = 0;
     }
     else
     {
-        std::string hash = "hash_" + packet.password;
-        if (db_->addUser(packet.username, hash))
-            resp.success = 1;
-        else
-            resp.success = 0;
+        const std::string hash = "hash_" + data.password;
+        resp.success = db_->addUser(data.username, hash) ? 1 : 0;
     }
-    auto response = Serializer::buildRegisterResponsePacket(messageID, sessionID, resp);
+    const auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
     sender_.sendResponse(response);
 }
 
-void ClientSession::handleAuthRequestPacket(uint32_t messageID, uint32_t sessionID,
-    const AuthRequestPacket& packet)
+void ClientSession::handlePacket(uint32_t messageID, uint32_t sessionID, const AuthRequestData& data)
 {
-    AuthResponsePacket resp;
-    std::string storedHash = db_->getUserPasswordHash(packet.username);
-    if (!storedHash.empty() && storedHash == "hash_" + packet.password)
-        resp.success = 1;
-    else
-        resp.success = 0;
+    AuthResponseData resp{};
 
-    auto response = Serializer::buildAuthResponsePacket(messageID, sessionID, resp);
+    const std::string storedHash = db_->getUserPasswordHash(data.username);
+    resp.success = (!storedHash.empty() && storedHash == "hash_" + data.password) ? 1 : 0;
+
+    const auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
     sender_.sendResponse(response);
 }
 
-void ClientSession::handleMessageSendPacket(uint32_t messageID, uint32_t sessionID,
-    const MessageSendPacket& packet)
+void ClientSession::handlePacket(uint32_t /*messageID*/, uint32_t /*sessionID*/,
+                                 const MessageSendData& data)
 {
-    Logger::instance().info("Message from {} to chat {}: {}", packet.senderID, packet.chatID, packet.text);
+    Logger::instance().info("Message from {} to chat {}: {}",
+                            data.senderID, data.chatID, data.text);
+    // TODO: разослать MessageReceive участникам чата.
 }
 
-void ClientSession::handleDisconnectRequestPacket()
+void ClientSession::handlePacket()
 {
-    Logger::instance().info("Client {} requested disconnect", socketDescriptor_);
+    Logger::instance().info("Client {} requested disconnect", socketFD_);
     closeSession();
 }
 
@@ -148,6 +140,6 @@ void ClientSession::closeSession()
     if (closed_)
         return;
     closed_ = true;
-    close(socketDescriptor_);
-    Logger::instance().info("Session closed for fd {}", socketDescriptor_);
+    close(socketFD_);
+    Logger::instance().info("Session closed for fd {}", socketFD_);
 }

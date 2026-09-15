@@ -21,7 +21,7 @@ int main()
 	ListeningSocket server;
 	server.start(config);
 	
-	EventPoller epoller(&db);
+	EventPoller epoller();
 	epoller.startEpollLoop(server.getServerSocketFD());
 	
 	

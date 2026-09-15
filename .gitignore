@@ -75,3 +75,4 @@ server
 
 # Logs directory
 logs/
+*.db
