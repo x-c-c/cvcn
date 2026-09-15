@@ -47,4 +47,5 @@ private:
     std::unordered_set<int> pendingDelete_;
 
     void closeClient(int fileDescriptor);
+    void closeOrDefer(int fileDescriptor);
 };

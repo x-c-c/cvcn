@@ -123,7 +123,7 @@ void EventPoller::startEventLoop(int serverFileDescriptor)
                             }
                             else
                             {
-                                addFileDescriptor(clientFileDescriptor, EPOLLIN | EPOLLET);
+                                addFileDescriptor(clientFileDescriptor, CLIENT_EVENTS_READ);
                                 if (onNewConnection_)
                                     onNewConnection_(clientFileDescriptor);
                             }

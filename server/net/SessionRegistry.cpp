@@ -9,10 +9,12 @@ void SessionRegistry::registerUser(int userID, IClientSession* session)
     byUserID_[userID] = session;
 }
 
-void SessionRegistry::unregisterUser(int userID)
+void SessionRegistry::unregisterUser(int userID, IClientSession* session)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    byUserID_.erase(userID);
+    auto it = byUserID_.find(userID);
+    if (it != byUserID_.end() && it->second == session)
+        byUserID_.erase(it);
 }
 
 IClientSession* SessionRegistry::findByUserID(int userID) const

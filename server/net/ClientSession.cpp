@@ -33,33 +33,44 @@ std::vector<Task> ClientSession::handleRead()
     try
     {
         uint8_t tempBuffer[config::SESSION_READ_BUFFER_SIZE];
-        ssize_t bytesRead = recv(fileDescriptor_, tempBuffer, sizeof(tempBuffer), 0);
-        if (bytesRead > 0)
+
+        // EPOLLET: читаем до EAGAIN, иначе остаток зависнет до следующего события.
+        for (;;)
         {
-            assembler_.appendData(tempBuffer, bytesRead);
-            PacketHeaderRaw header;
-            std::vector<uint8_t> body;
-            while (assembler_.extractPacket(header, body))
+            ssize_t bytesRead = recv(fileDescriptor_, tempBuffer, sizeof(tempBuffer), 0);
+
+            if (bytesRead > 0)
             {
-                if (header.messageLen > config::MAX_REASONABLE_PACKET_BODY)
+                assembler_.appendData(tempBuffer, bytesRead);
+                PacketHeaderRaw header;
+                std::vector<uint8_t> body;
+                while (assembler_.extractPacket(header, body))
                 {
-                    LOG_WARN("Packet too large: {} bytes (fd {})",
-                        header.messageLen, fileDescriptor_);
-                    closeSession();
-                    return tasks;
+                    if (header.messageLen > config::MAX_REASONABLE_PACKET_BODY)
+                    {
+                        LOG_WARN("Packet too large: {} bytes (fd {})",
+                            header.messageLen, fileDescriptor_);
+                        closeSession();
+                        return tasks;
+                    }
+                    tasks.push_back(Task{ this, header, std::move(body) });
                 }
-                tasks.push_back(Task{ this, header, std::move(body) });
+                continue;
             }
-        }
-        else if (bytesRead == 0)
-        {
-            LOG_INFO("Client {} closed connection", fileDescriptor_);
-            closeSession();
-        }
-        else if (errno != EAGAIN && errno != EWOULDBLOCK)
-        {
+
+            if (bytesRead == 0)
+            {
+                LOG_INFO("Client {} closed connection", fileDescriptor_);
+                closeSession();
+                break;
+            }
+
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                break;
+
             LOG_ERROR("recv error on fd {}: {}", fileDescriptor_, strerror(errno));
             closeSession();
+            break;
         }
     }
     catch (const std::bad_alloc&)

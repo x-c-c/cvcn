@@ -15,7 +15,7 @@ class SessionRegistry : public ISessionRegistry
 {
 public:
     void registerUser(int userID, IClientSession* session) override;
-    void unregisterUser(int userID) override;
+    void unregisterUser(int userID, IClientSession* session) override;
     IClientSession* findByUserID(int userID) const override;
     std::vector<IClientSession*> findByUserIDs(const std::vector<int>& userIDs) const override;
 

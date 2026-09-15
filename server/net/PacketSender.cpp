@@ -10,7 +10,7 @@ PacketSender::PacketSender(EventPoller* eventPoller, int fileDescriptor):
 
 void PacketSender::armWriteNotification()
 {
-	eventPoller_->modifyFileDescriptorEvents(fileDescriptor_, EPOLLIN | EPOLLOUT);
+	eventPoller_->modifyFileDescriptorEvents(fileDescriptor_, EventPoller::CLIENT_EVENTS_WRITE);
 	writePending_ = true;
 }
 
@@ -44,7 +44,7 @@ void PacketSender::flushSendQueue()
 		sendQueue_.pop_front();
 	}
 
-	eventPoller_->modifyFileDescriptorEvents(fileDescriptor_, EPOLLIN);
+	eventPoller_->modifyFileDescriptorEvents(fileDescriptor_, EventPoller::CLIENT_EVENTS_READ);
 	writePending_ = false;
 }
 

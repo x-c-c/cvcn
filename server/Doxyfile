@@ -1,19 +1,49 @@
+# --- Проект ---
 PROJECT_NAME           = "CVCN Server"
 PROJECT_BRIEF          = "C++ chat server with epoll and binary protocol"
-OUTPUT_DIRECTORY       = ./docs
+OUTPUT_DIRECTORY       = docs
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = Russian
+DOXYFILE_ENCODING      = UTF-8
 
-EXTRACT_ALL            = YES
-EXTRACT_PRIVATE        = YES
-EXTRACT_STATIC         = YES
-
+# --- Что парсить ---
 INPUT                  = .
 RECURSIVE              = YES
 FILE_PATTERNS          = *.cpp *.h *.hpp
+EXCLUDE                = build docs logs
+EXCLUDE_PATTERNS       = *.bak */build/* */docs/* */logs/*
 
+# --- Что показывать ---
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_AS_ERROR          = NO
+
+# --- Вывод ---
 GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
 GENERATE_XML           = NO
 
-HAVE_DOT               = NO
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+SEARCHENGINE           = YES
+
+# --- Графы ---
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+CLASS_DIAGRAMS         = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+
+# --- Макросы ---
+PREDEFINED             = LOG_TRACE(x)= LOG_DEBUG(x)= LOG_INFO(x)= \
+                         LOG_WARN(x)= LOG_ERROR(x)= LOG_CRITICAL(x)=

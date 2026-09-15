@@ -27,7 +27,7 @@ SessionManager::~SessionManager()
         {
             const int userID = s->getUserID();
             if (sessionRegistry_ && userID != -1)
-                sessionRegistry_->unregisterUser(userID);
+                sessionRegistry_->unregisterUser(userID, s);
             s->closeSession();
         }
         delete s;
@@ -93,7 +93,7 @@ void SessionManager::onRead(int fileDescriptor)
     }
 
     if (session->isClosed())
-        closeClient(fileDescriptor);
+        closeOrDefer(fileDescriptor);
 }
 
 void SessionManager::onWrite(int fileDescriptor)
@@ -109,7 +109,7 @@ void SessionManager::onWrite(int fileDescriptor)
 void SessionManager::onError(int fileDescriptor, uint32_t events)
 {
     LOG_WARN("Error event on fd {} (events=0x{:X})", fileDescriptor, events);
-    closeClient(fileDescriptor);
+    closeOrDefer(fileDescriptor);
 }
 
 void SessionManager::requestCloseClient(int fileDescriptor)
@@ -145,6 +145,22 @@ void SessionManager::onTaskDone(int fileDescriptor)
     }
 }
 
+void SessionManager::closeOrDefer(int fileDescriptor)
+{
+    auto inflightIt = inFlight_.find(fileDescriptor);
+    const int pending = (inflightIt == inFlight_.end()) ? 0 : inflightIt->second;
+
+    if (pending > 0)
+    {
+        pendingDelete_.insert(fileDescriptor);
+        auto sit = sessions_.find(fileDescriptor);
+        if (sit != sessions_.end() && !sit->second->isClosed())
+            sit->second->closeSession();
+        return;
+    }
+    closeClient(fileDescriptor);
+}
+
 void SessionManager::closeClient(int fileDescriptor)
 {
     auto it = sessions_.find(fileDescriptor);
@@ -155,7 +171,7 @@ void SessionManager::closeClient(int fileDescriptor)
 
     const int userID = session->getUserID();
     if (sessionRegistry_ && userID != -1)
-        sessionRegistry_->unregisterUser(userID);
+        sessionRegistry_->unregisterUser(userID, session);
 
     if (!session->isClosed())
         session->closeSession();

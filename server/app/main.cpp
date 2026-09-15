@@ -14,6 +14,7 @@
 #include "PacketDispatcher.h"
 #include "EventPoller.h"
 #include "SessionManager.h"
+#include "ClientSession.h"
 #include "ThreadPool.h"
 #include "ResultQueue.h"
 #include <chrono>

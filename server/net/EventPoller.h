@@ -20,6 +20,11 @@ public:
 	void setWriteEventCallback(WriteEventCallback callback);
 	void setErrorEventCallback(ErrorEventCallback callback);
 
+	// События клиентского fd. EPOLLET включаем всегда, чтобы MOD
+	// не сбрасывал edge-triggered режим.
+	static constexpr uint32_t CLIENT_EVENTS_READ  = EPOLLIN | EPOLLET;
+	static constexpr uint32_t CLIENT_EVENTS_WRITE = EPOLLIN | EPOLLET | EPOLLOUT;
+
 
 	void startEventLoop(int serverFileDescriptor);
 	void stopEventLoop();

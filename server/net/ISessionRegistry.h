@@ -14,7 +14,7 @@ public:
     virtual ~ISessionRegistry() = default;
 
     virtual void registerUser(int userID, IClientSession* session) = 0;
-    virtual void unregisterUser(int userID) = 0;
+    virtual void unregisterUser(int userID, IClientSession* session) = 0;
     virtual IClientSession* findByUserID(int userID) const = 0;
     virtual std::vector<IClientSession*> findByUserIDs(const std::vector<int>& userIDs) const = 0;
 };
