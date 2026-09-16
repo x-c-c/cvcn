@@ -1,0 +1,180 @@
+# ────────────────────────────────────────────────────────────────────────
+# Doxyfile для проекта cvcn (клиент-серверный чат на C++ / Qt).
+#
+# Запуск:
+#   cd ~/cvcn-54
+#   doxygen
+# Результат:
+#   docs/html/index.html — откройте в браузере.
+#
+# Обновление после правок:
+#   doxygen — файл перезаписывается автоматически, старые страницы
+#   пересобираются только для изменившихся исходников.
+# ────────────────────────────────────────────────────────────────────────
+
+# ─── Идентификация проекта ──────────────────────────────────────────────
+
+PROJECT_NAME           = "cvcn — клиент-серверный чат"
+PROJECT_NUMBER         = 0.1
+PROJECT_BRIEF          = "Учебный чат: сервер на epoll, клиент на Qt"
+PROJECT_LOGO           =
+
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+
+# Язык интерфейса выходных страниц. Русский поддерживается.
+OUTPUT_LANGUAGE        = Russian
+
+# Кодировка исходников. UTF-8 — стандарт для C++ и Qt.
+DOXYFILE_ENCODING      = UTF-8
+INPUT_ENCODING         = UTF-8
+
+# ─── Что парсить ────────────────────────────────────────────────────────
+
+# Сканируем оба подпроекта. Пути относительны Doxyfile.
+INPUT                  = client \
+                         server
+
+# Рекурсивный обход каталогов.
+RECURSIVE              = YES
+
+# Не трогаем сгенерированные Qt-файлы и сторонние библиотеки.
+EXCLUDE                = client/build \
+                         server/build \
+                         server/libs \
+                         client/ui/ui_*.h \
+                         server/libs/crc
+
+EXCLUDE_PATTERNS       = */build/* \
+                         */logs/* \
+                         ui_*.h \
+                         moc_*.cpp \
+                         *.bak
+
+# Расширения файлов, которые Doxygen считает исходниками.
+FILE_PATTERNS          = *.cpp \
+                         *.h \
+                         *.hpp \
+                         *.ui
+
+# ─── Режим извлечения ───────────────────────────────────────────────────
+
+# Извлекать всё, включая приватные члены и статические функции.
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+
+# Не документировать файлы, у которых нет хотя бы @file.
+# Полезно, чтобы в документации не появлялись случайные заголовки
+# без комментариев. Если хотите — поставьте YES и получите всё.
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+
+# ─── Предупреждения ────────────────────────────────────────────────────
+
+# Логировать недокументированные члены и битые ссылки.
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = NO
+
+# Куда писать предупреждения. Пусто — в stderr.
+WARN_LOGFILE           =
+
+# ─── Настройки под C++ и Qt ────────────────────────────────────────────
+
+# Язык по умолчанию. Оптимизирует парсер под C++.
+OPTIMIZE_OUTPUT_FOR_C  = NO
+OPTIMIZE_OUTPUT_JAVA   = NO
+OPTIMIZE_FOR_FORTRAN   = NO
+OPTIMIZE_OUTPUT_VHDL   = NO
+
+# C++ — режим по умолчанию, но включим поддержку.
+EXTENSION_MAPPING      =
+MARKDOWN_SUPPORT       = YES
+
+# Qt-специфика: краткое описание до первой пустой строки считается
+# @brief. Это стандарт для Qt-комментариев.
+QT_AUTOBRIEF           = YES
+
+# Многострочные комментарии C++ (///, //!, /** */) — все три стиля.
+JAVADOC_AUTOBRIEF      = NO
+MULTILINE_CPP_IS_BRIEF = NO
+
+# Не включать определения inline-функций в HTML — они дублируют .h.
+INLINE_INFO            = YES
+INLINE_SOURCES         = NO
+
+# Сортировка членов класса по алфавиту. Удобно для больших классов.
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = YES
+SORT_BY_SCOPE_NAME     = NO
+
+# ─── Диаграммы ──────────────────────────────────────────────────────────
+# Graphviz (dot) должен быть установлен:
+#   sudo apt install graphviz
+# Если не нужны — поставьте NO и забудьте про этот блок.
+
+HAVE_DOT               = YES
+DOT_NUM_THREADS        = 0
+
+# Общие диаграммы зависимостей между файлами.
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+
+# Диаграммы наследования и включений — полезно, если классов много.
+CLASS_DIAGRAMS         = YES
+HAVE_DOT               = YES
+UML_LOOK               = NO
+
+# Показывать include-граф (кто кого подключает).
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+
+# Не строить графы для всего подряд — только там, где реально связи.
+DOT_GRAPH_MAX_NODES    = 50
+MAX_DOT_GRAPH_DEPTH    = 0
+
+# ─── HTML ───────────────────────────────────────────────────────────────
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+
+# Тема. Попробуйте также "doxygen-awesome-css" с GitHub,
+# если хочется современный вид без правки шаблонов.
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+
+# Показывать дерево файлов и классов в левой панели.
+HTML_DYNAMIC_MENUS     = YES
+DISABLE_INDEX          = NO
+GENERATE_TREEVIEW      = YES
+FULL_SIDEBAR           = NO
+
+# Поиск по документации на стороне клиента (JS).
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+
+# ─── LaTeX / PDF ────────────────────────────────────────────────────────
+# Обычно не нужно, но если хотите PDF — поставьте YES и соберите
+# через pdflatex. Требует texlive-full, ~2 ГБ зависимостей.
+
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+GENERATE_DOCBOOK       = NO
+GENERATE_AUTOGEN_DEF   = NO
+GENERATE_PERLMOD       = NO
+
+# ─── Прочее ─────────────────────────────────────────────────────────────
+
+# Не вставлять время генерации в футер — чтобы diff не показывал
+# изменения при каждом запуске.
+HTML_TIMESTAMP         = NO
+
+# Поддержка markdown-файлов (README.md, docs/*.md) как отдельных
+# страниц документации.
+USE_MDFILE_AS_MAINPAGE = README.md

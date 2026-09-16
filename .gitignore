@@ -76,3 +76,4 @@ server
 # Logs directory
 logs/
 chat.db
+docs/
