@@ -80,6 +80,7 @@ doxygen
 
 ```bash
 xdg-open docs/html/index.html
+```
 Если Graphviz не нужен (нет диаграмм) — в Doxyfile поставить
 HAVE_DOT = NO. Каталог docs/ — генерируемый, в .gitignore.
-```
+
