@@ -69,11 +69,18 @@ vcpkg_installed/
 Testing/
 .cache/
 
-# Server executable
-server
-# Client executable
+# Executables
+server/server
+client/client
 
-# Logs directory
+# Database
+server/chat.db
+
+# Logs
 logs/
-chat.db
+server/logs/
+client/logs/
+
+
+# Doxygen
 docs/
