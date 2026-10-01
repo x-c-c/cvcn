@@ -5,8 +5,8 @@
 ## Зависимости
 
 ```bash
-sudo apt install build-essential cmake ninja-build \
-                 qtbase5-dev libfmt-dev libspdlog-dev libsqlite3-dev
+git clone -b withoutDeepseek https://github.com/x-c-c/cvcn
+sudo apt install build-essential cmake ninja-build qtbase5-dev libfmt-dev libspdlog-dev libsqlite3-dev
 ```
 Сборка
 Сервер:
