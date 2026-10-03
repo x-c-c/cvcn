@@ -36,15 +36,12 @@ Controller::Controller(Model& model, AccountDialog& view):
 
 void Controller::slotAuthRequested(const QString& username, const QString& password)
 {
-    // Никакой валидации здесь нет. Если поля пустые — на сервер
-    // уйдёт AuthRequest с пустыми строками, сервер вернёт
-    // AuthResponse с success = 0.
+    // добавить сюда валидатор
     model_.sendAuthRequest(username, password);
 }
 
 void Controller::slotRegRequested(const QString& username, const QString& password)
 {
-    // Аналогично slotAuthRequested: маршрутизация без логики.
     model_.sendRegRequest(username, password);
 }
 

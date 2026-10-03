@@ -109,9 +109,7 @@ void Model::slotReadyRead()
 
 void Model::sendPacket(const std::vector<uint8_t>& packet)
 {
-    // Проверка состояния сокета: если не подключены — отправлять
-    // некуда. QTcpSocket::write в этом состоянии обычно просто
-    // игнорирует данные, но лучше явно уведомить.
+    // Проверка состояния сокета: если не подключены — отправлять некуда.
     if (socket_->state() != QAbstractSocket::ConnectedState)
     {
         emit errorOccurred(QStringLiteral("Not connected to server"));
@@ -121,8 +119,7 @@ void Model::sendPacket(const std::vector<uint8_t>& packet)
     // Копирование в QByteArray обязательно: write() может
     // буферизовать данные, а оригинальный vector может
     // умереть раньше, чем Qt их отправит.
-    const QByteArray data(reinterpret_cast<const char*>(packet.data()),
-                          static_cast<int>(packet.size()));
+    const QByteArray data(reinterpret_cast<const char*>(packet.data()), static_cast<int>(packet.size()));
 
     const qint64 bytesWritten = socket_->write(data);
     if (bytesWritten == -1)
@@ -149,7 +146,6 @@ void Model::sendRegRequest(const QString& username, const QString& password)
 
 void Model::sendAuthRequest(const QString& username, const QString& password)
 {
-    // Симметрично sendRegRequest, но с AuthRequestData.
     AuthRequestData payload;
     payload.username = username.toStdString();
     payload.password = password.toStdString();

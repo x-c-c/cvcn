@@ -9,25 +9,41 @@ find_package(spdlog REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 set(SERVER_SOURCES
-	app/main.cpp
-	app/ShutdownSignal.cpp
+        app/main.cpp
+        app/ShutdownSignal.cpp
+        app/ShutdownSignal.h
 
-	net/ListeningSocket.cpp
-	net/EventPoller.cpp
-	net/PortSelector.cpp
-	net/ClientSession.cpp
-	net/SessionManager.cpp
+        config/ServerConfig.h
 
-	protocol/ByteReader.cpp
-	protocol/ByteWriter.cpp
-	protocol/PacketBuilder.cpp
-	protocol/PacketParser.cpp
-	protocol/PacketAssembler.cpp
-	protocol/PacketSender.cpp
+        net/ListeningSocket.cpp
+        net/ListeningSocket.h
+        net/EventPoller.cpp
+        net/EventPoller.h
+        net/PortSelector.cpp
+        net/PortSelector.h
+        net/ClientSession.cpp
+        net/ClientSession.h
+        net/SessionManager.cpp
+        net/SessionManager.h
 
-	storage/Database.cpp
+        protocol/ByteReader.cpp
+        protocol/ByteReader.h
+        protocol/ByteWriter.cpp
+        protocol/ByteWriter.h
+        protocol/PacketBuilder.cpp
+        protocol/PacketBuilder.h
+        protocol/PacketParser.cpp
+        protocol/PacketParser.h
+        protocol/PacketAssembler.cpp
+        protocol/PacketAssembler.h
+        protocol/PacketSender.cpp
+        protocol/PacketSender.h
+        protocol/PacketData.h
+        storage/Database.cpp
+        storage/Database.h
 
-	utils/Logger.cpp
+        utils/Logger.cpp
+        utils/Logger.h
 )
 
 add_executable(server ${SERVER_SOURCES})
