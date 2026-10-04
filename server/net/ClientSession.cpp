@@ -158,7 +158,10 @@ void ClientSession::handlePacket(uint32_t messageID, uint32_t sessionID,
     AuthResponseData resp{};
 
     const std::string storedHash = db_->getUserPasswordHash(data.username);
-    resp.success = (!storedHash.empty() && storedHash == "hash_" + data.password) ? 1 : 0;
+    if (!storedHash.empty() && storedHash == "hash_" + data.password)
+    {
+        sessionID_ = ;
+    }
 
     const auto response = PacketBuilder::buildPacket(messageID, sessionID, resp);
     sender_.sendResponse(response);

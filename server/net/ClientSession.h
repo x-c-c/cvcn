@@ -79,6 +79,7 @@ private:
     Database* db_;                  ///< Не владеет. Общая на весь сервер.
     PacketAssembler assembler_;     ///< Владеет. Буфер незавершённых пакетов.
     PacketSender sender_;           ///< Владеет. Очередь исходящих пакетов.
+    uint32_t sessionID_ = 0;
 
     /**
      * @brief Диспетчер по типу тела пакета.

@@ -139,7 +139,7 @@ struct AuthRequestData
  */
 struct AuthResponseData
 {
-    uint8_t success;        ///< 1 — успех, 0 — неверный логин/пароль.
+    uint32_t sessionID;
 };
 
 /**
